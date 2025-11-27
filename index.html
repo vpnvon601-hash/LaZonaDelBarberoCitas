@@ -10,18 +10,19 @@
 body, html { height:100%; font-family:'Montserrat',sans-serif; }
 body { background: linear-gradient(135deg,#111,#222); display:flex; justify-content:center; align-items:center; }
 
-/* SPLASH PROFESIONAL */
+/* SPLASH */
 #splash {
   position:fixed; top:0; left:0; width:100%; height:100%;
-  background: linear-gradient(135deg, #111, #1c1c1c);
+  background: linear-gradient(135deg,#111,#1c1c1c);
   display:flex; justify-content:center; align-items:center;
   flex-direction: column; color:#fff; font-family:'Montserrat',sans-serif;
   z-index:9999; overflow:hidden;
 }
 .splash-logo {
-  font-size:2.2em; font-weight:700; letter-spacing:2px;
-  text-transform: uppercase; color:#6c63ff;
-  animation: pulse 1.5s infinite;
+  font-size:2.4em; font-weight:700; letter-spacing:2px;
+  text-transform: uppercase; color:#fff;
+  text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #6c63ff, 0 0 30px #6c63ff, 0 0 40px #6c63ff;
+  animation: neonPulse 1.5s infinite alternate;
 }
 .loader {
   border: 6px solid #333;
@@ -30,12 +31,12 @@ body { background: linear-gradient(135deg,#111,#222); display:flex; justify-cont
   width: 60px;
   height: 60px;
   animation: spin 1s linear infinite;
-  margin-top: 20px;
+  margin-top: 25px;
 }
-@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-@keyframes pulse {
-  0%,100% { transform: scale(1); opacity:1; }
-  50% { transform: scale(1.1); opacity:0.7; }
+@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
+@keyframes neonPulse {
+  0% {text-shadow:0 0 5px #fff,0 0 10px #fff,0 0 20px #6c63ff;}
+  100% {text-shadow:0 0 10px #fff,0 0 20px #fff,0 0 30px #6c63ff,0 0 40px #6c63ff;}
 }
 .fade-out { animation: fadeOut 0.8s forwards; }
 @keyframes fadeOut { from {opacity:1;} to {opacity:0; visibility:hidden;} }
@@ -51,43 +52,42 @@ body { background: linear-gradient(135deg,#111,#222); display:flex; justify-cont
 @keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
 
 h2 { text-align:center; margin-bottom:25px; font-weight:600; color:#fff; }
+
 input, select, button {
   width:100%; padding:14px; margin:12px 0; border-radius:10px; border:none; font-size:16px; transition:0.3s;
+  color:#6c63ff;
 }
-input, select { background:#333; color:#fff; }
+input, select { background:#333; color:#6c63ff; }
 input:focus, select:focus { outline:none; box-shadow:0 0 8px #6c63ff; }
-button {
-  background:#6c63ff; color:#fff; font-weight:600; cursor:pointer;
-}
-button:hover { background:#5751d0; transform:scale(1.02); }
-option.unavailable { color:red; font-weight:bold; }
+
+/* Campo completado */
+input.filled, select.filled { background:#fff; color:#6c63ff; }
+
+/* PLACEHOLDER */
+input::placeholder, select::placeholder { color:#aaa; }
 
 /* FECHA */
 .fechaInput {
   position: relative;
-  background:#333; color:#fff; border-radius:10px; padding:14px; border:none; font-size:16px;
+  background:#333; color:#6c63ff; border-radius:10px; padding:14px; border:none; font-size:16px;
 }
-.fechaInput::-webkit-datetime-edit { color:#fff; }
+.fechaInput::-webkit-datetime-edit { color:#6c63ff; }
 .fechaInput::before {
   content: "Selecciona fecha";
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #aaa;
-  pointer-events: none;
+  left: 14px; top:50%; transform: translateY(-50%);
+  color: #aaa; pointer-events: none;
 }
 .fechaInput:focus::before,
 .fechaInput[value]:not([value=""])::before { content: ""; }
-.fechaInput::-webkit-clear-button,
-.fechaInput::-webkit-inner-spin-button,
-.fechaInput::-webkit-calendar-picker-indicator {
-  display: none; -webkit-appearance: none; -moz-appearance: none; appearance: none;
-}
+.fechaInput.filled { background:#fff; color:#6c63ff; }
 
-/* TELÉFONO */
-#telefono { color:#000; background:#fff; }
-#telefono:focus { box-shadow:0 0 8px #6c63ff; }
+/* BOTONES */
+button { background:#6c63ff; color:#fff; font-weight:600; cursor:pointer; }
+button:hover { background:#5751d0; transform:scale(1.02); }
+
+/* HORAS OCUPADAS */
+option.unavailable { color:red; font-weight:bold; }
 
 /* RESPONSIVO */
 @media(max-width:480px){
@@ -124,7 +124,6 @@ option.unavailable { color:red; font-weight:bold; }
 </form>
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -136,7 +135,7 @@ setTimeout(()=>{
   setTimeout(()=>{ document.getElementById('mainForm').style.display='block'; },800);
 },2000);
 
-// FIREBASE CONFIG
+// FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeBPyTkymk6I",
   authDomain: "shantybarber-b7b8c.firebaseapp.com",
@@ -153,6 +152,7 @@ const db = firebase.database();
 const horaSelect = document.getElementById('hora');
 const fechaInput = document.getElementById('fecha');
 const barberoSelect = document.getElementById('barbero');
+const inputs = [document.getElementById('nombre'),document.getElementById('apellido'),document.getElementById('telefono'),fechaInput,barberoSelect,horaSelect];
 
 // FORMATEAR HORAS AM/PM
 function formatHora(h,m){
@@ -194,9 +194,16 @@ function actualizarHoras(){
     }
   });
 }
-
 fechaInput.addEventListener('change', actualizarHoras);
 barberoSelect.addEventListener('change', actualizarHoras);
+
+// CAMBIO DE ESTILO CUANDO SE COMPLETA
+inputs.forEach(inp=>{
+  inp.addEventListener('change', ()=>{ 
+    if(inp.value) inp.classList.add('filled'); 
+    else inp.classList.remove('filled');
+  });
+});
 
 // ENVIAR FORMULARIO
 document.getElementById('citaForm').addEventListener('submit', function(e){
@@ -217,6 +224,7 @@ document.getElementById('citaForm').addEventListener('submit', function(e){
   alert('Cita agendada correctamente!');
   document.getElementById('citaForm').reset();
   horaSelect.innerHTML='';
+  inputs.forEach(i=>i.classList.remove('filled'));
 });
 
 generarHoras();
