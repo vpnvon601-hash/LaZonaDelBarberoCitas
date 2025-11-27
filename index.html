@@ -8,7 +8,7 @@
 <style>
 * { box-sizing: border-box; margin:0; padding:0; }
 body, html { height:100%; font-family:'Montserrat',sans-serif; }
-body { background-color:#111; display:flex; justify-content:center; align-items:center; }
+body { background: linear-gradient(135deg, #111, #222); display:flex; justify-content:center; align-items:center; }
 #splash {
   position:fixed; top:0; left:0; width:100%; height:100%;
   background:#000; display:flex; justify-content:center; align-items:center; color:#fff; font-size:2em; z-index:9999;
@@ -27,22 +27,47 @@ body { background-color:#111; display:flex; justify-content:center; align-items:
 
 .container {
   background-color:#1c1c1c; color:#fff;
-  padding:40px 30px; border-radius:15px; width:400px;
-  box-shadow:0 20px 40px rgba(0,0,0,0.6);
+  padding:40px 30px; border-radius:20px; width:90%; max-width:400px;
+  box-shadow:0 15px 30px rgba(0,0,0,0.5);
+  animation: fadeIn 0.8s ease;
 }
-h2 { text-align:center; margin-bottom:20px; font-weight:600; color:#fff; }
+@keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+
+h2 { text-align:center; margin-bottom:25px; font-weight:600; color:#fff; }
 input, select, button {
-  width:100%; padding:12px; margin:10px 0; border-radius:8px; border:none; font-size:16px;
+  width:100%; padding:14px; margin:12px 0; border-radius:10px; border:none; font-size:16px; transition:0.3s;
 }
 input, select { background:#333; color:#fff; }
-input:focus, select:focus { outline:none; box-shadow:0 0 5px #6c63ff; }
+input:focus, select:focus { outline:none; box-shadow:0 0 8px #6c63ff; }
 button {
-  background:#6c63ff; color:#fff; font-weight:600; cursor:pointer; transition:0.3s;
+  background:#6c63ff; color:#fff; font-weight:600; cursor:pointer;
 }
-button:hover { background:#5751d0; }
+button:hover { background:#5751d0; transform:scale(1.02); }
+
 option.unavailable { color:red; font-weight:bold; }
-#fechaSeleccionada { background:#222; color:#fff; border-radius:5px; padding:10px; border:none; margin-top:-5px; margin-bottom:10px; }
-label { font-weight:600; margin-top:5px; display:block; }
+
+.fechaInput {
+  position: relative;
+  background:#333; color:#fff; border-radius:10px; padding:14px; border:none; font-size:16px;
+}
+.fechaInput::-webkit-datetime-edit { color:#fff; }
+.fechaInput::before {
+  content: "Selecciona fecha";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  pointer-events: none;
+}
+.fechaInput:focus::before,
+.fechaInput[value]:not([value=""])::before { content: ""; }
+
+/* Responsivo */
+@media(max-width:480px){
+  .container { padding:30px 20px; border-radius:15px; }
+  input, select, button { padding:12px; font-size:14px; }
+}
 </style>
 </head>
 <body>
@@ -67,27 +92,24 @@ label { font-weight:600; margin-top:5px; display:block; }
   <option value="Leonardo">Leonardo</option>
 </select>
 
-<input type="date" id="fecha" required>
-<label>Fecha seleccionada:</label>
-<input type="text" id="fechaSeleccionada" readonly>
+<input type="date" id="fecha" class="fechaInput" required>
 
 <select id="hora" required></select>
 <button type="submit">Agendar Cita</button>
 </form>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-// Splash screen
+// Splash
 setTimeout(()=>{
   document.getElementById('splash').style.display='none';
   document.getElementById('mainForm').style.display='block';
-}, 2000);
+},2000);
 
-// Firebase config
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeBPyTkymk6I",
   authDomain: "shantybarber-b7b8c.firebaseapp.com",
@@ -104,15 +126,13 @@ const db = firebase.database();
 const horaSelect = document.getElementById('hora');
 const fechaInput = document.getElementById('fecha');
 const barberoSelect = document.getElementById('barbero');
-const fechaSeleccionadaInput = document.getElementById('fechaSeleccionada');
 
-// Función para convertir minutos a formato AM/PM
-function formatHora(horas, minutos){
-  let ampm = horas >= 12 ? 'PM' : 'AM';
-  let h = horas % 12;
-  if(h === 0) h = 12;
-  let m = minutos.toString().padStart(2,'0');
-  return `${h}:${m} ${ampm}`;
+// Convertir minutos a AM/PM
+function formatHora(h,m){
+  let ampm = h>=12?'PM':'AM';
+  let hh = h%12; if(hh===0) hh=12;
+  let mm = m.toString().padStart(2,'0');
+  return `${hh}:${mm} ${ampm}`;
 }
 
 // Generar horas
@@ -121,24 +141,13 @@ function generarHoras(){
   let start=10*60, end=21*60;
   while(start<end){
     let h=Math.floor(start/60), m=start%60;
-    let horaStr=formatHora(h,m);
     let option=document.createElement('option');
-    option.value=horaStr;
-    option.textContent=horaStr;
+    option.value = formatHora(h,m);
+    option.textContent = formatHora(h,m);
     horaSelect.appendChild(option);
     start+=40;
   }
 }
-
-// Mostrar fecha seleccionada
-fechaInput.addEventListener('change', function(){
-  const fecha = this.value;
-  if(fecha){
-    const parts = fecha.split('-');
-    fechaSeleccionadaInput.value = `${parts[2]}/${parts[1]}/${parts[0]}`;
-  } else fechaSeleccionadaInput.value='';
-  actualizarHoras();
-});
 
 // Actualizar horas ocupadas por barbero
 function actualizarHoras(){
@@ -151,7 +160,7 @@ function actualizarHoras(){
     const citas = snapshot.val()||{};
     for(let option of horaSelect.options){
       if(citas[option.value]){
-        option.disabled=true;
+        option.disabled = true;
         option.classList.add('unavailable');
         option.textContent = option.value+' - Ocupado';
       }
@@ -173,11 +182,9 @@ document.getElementById('citaForm').addEventListener('submit', function(e){
   const barbero=document.getElementById('barbero').value;
   if(!hora) return alert('Selecciona una hora disponible.');
 
-  // Guardar en Firebase
   db.ref('citas/'+fecha+'/'+barbero+'/'+hora).set({nombre,apellido,telefono});
 
-  // Abrir WhatsApp
-  const mensaje=`🤗 Hola! Quiero agendar una cita 💈:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
+  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
   const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
   window.open(waUrl,'_blank');
   alert('Cita agendada correctamente!');
