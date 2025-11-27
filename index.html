@@ -12,15 +12,27 @@ body { background-color:#111; display:flex; justify-content:center; align-items:
 #splash {
   position:fixed; top:0; left:0; width:100%; height:100%;
   background:#000; display:flex; justify-content:center; align-items:center; color:#fff; font-size:2em; z-index:9999;
+  flex-direction: column;
 }
+.loader {
+  border: 6px solid #333;
+  border-top: 6px solid #6c63ff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
 .container {
   background-color:#1c1c1c; color:#fff;
   padding:40px 30px; border-radius:15px; width:400px;
   box-shadow:0 20px 40px rgba(0,0,0,0.6);
 }
-h2 { text-align:center; margin-bottom:30px; font-weight:600; color:#fff; }
+h2 { text-align:center; margin-bottom:20px; font-weight:600; color:#fff; }
 input, select, button {
-  width:100%; padding:12px; margin:12px 0; border-radius:8px; border:none; font-size:16px;
+  width:100%; padding:12px; margin:10px 0; border-radius:8px; border:none; font-size:16px;
 }
 input, select { background:#333; color:#fff; }
 input:focus, select:focus { outline:none; box-shadow:0 0 5px #6c63ff; }
@@ -29,11 +41,16 @@ button {
 }
 button:hover { background:#5751d0; }
 option.unavailable { color:red; font-weight:bold; }
+#fechaSeleccionada { background:#222; color:#fff; border-radius:5px; padding:10px; border:none; margin-top:-5px; margin-bottom:10px; }
+label { font-weight:600; margin-top:5px; display:block; }
 </style>
 </head>
 <body>
 
-<div id="splash">LA ZONA DEL BARBERO</div>
+<div id="splash">
+  <div class="loader"></div>
+  LA ZONA DEL BARBERO
+</div>
 
 <div class="container" style="display:none;" id="mainForm">
 <h2>Agendar Cita</h2>
@@ -41,6 +58,7 @@ option.unavailable { color:red; font-weight:bold; }
 <input type="text" id="nombre" placeholder="Nombre" required>
 <input type="text" id="apellido" placeholder="Apellido" required>
 <input type="tel" id="telefono" placeholder="Número telefónico" required pattern="[0-9]{10,15}">
+
 <select id="barbero" required>
   <option value="">Selecciona Barbero</option>
   <option value="Dylan">Dylan</option>
@@ -48,7 +66,11 @@ option.unavailable { color:red; font-weight:bold; }
   <option value="Alejandro">Alejandro</option>
   <option value="Leonardo">Leonardo</option>
 </select>
+
 <input type="date" id="fecha" required>
+<label>Fecha seleccionada:</label>
+<input type="text" id="fechaSeleccionada" readonly>
+
 <select id="hora" required></select>
 <button type="submit">Agendar Cita</button>
 </form>
@@ -60,7 +82,10 @@ option.unavailable { color:red; font-weight:bold; }
 
 <script>
 // Splash screen
-setTimeout(()=>{ document.getElementById('splash').style.display='none'; document.getElementById('mainForm').style.display='block'; }, 2000);
+setTimeout(()=>{
+  document.getElementById('splash').style.display='none';
+  document.getElementById('mainForm').style.display='block';
+}, 2000);
 
 // Firebase config
 const firebaseConfig = {
@@ -79,25 +104,48 @@ const db = firebase.database();
 const horaSelect = document.getElementById('hora');
 const fechaInput = document.getElementById('fecha');
 const barberoSelect = document.getElementById('barbero');
+const fechaSeleccionadaInput = document.getElementById('fechaSeleccionada');
+
+// Función para convertir minutos a formato AM/PM
+function formatHora(horas, minutos){
+  let ampm = horas >= 12 ? 'PM' : 'AM';
+  let h = horas % 12;
+  if(h === 0) h = 12;
+  let m = minutos.toString().padStart(2,'0');
+  return `${h}:${m} ${ampm}`;
+}
 
 // Generar horas
-function generarHoras() {
+function generarHoras(){
   horaSelect.innerHTML='';
   let start=10*60, end=21*60;
   while(start<end){
     let h=Math.floor(start/60), m=start%60;
-    let horaStr=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+    let horaStr=formatHora(h,m);
     let option=document.createElement('option');
-    option.value=horaStr; option.textContent=horaStr;
+    option.value=horaStr;
+    option.textContent=horaStr;
     horaSelect.appendChild(option);
     start+=40;
   }
 }
 
+// Mostrar fecha seleccionada
+fechaInput.addEventListener('change', function(){
+  const fecha = this.value;
+  if(fecha){
+    const parts = fecha.split('-');
+    fechaSeleccionadaInput.value = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  } else fechaSeleccionadaInput.value='';
+  actualizarHoras();
+});
+
 // Actualizar horas ocupadas por barbero
-function actualizarHoras() {
-  if(!fechaInput.value || !barberoSelect.value) return;
-  const ref=db.ref('citas/'+fechaInput.value+'/'+barberoSelect.value);
+function actualizarHoras(){
+  const fecha = fechaInput.value;
+  const barbero = barberoSelect.value;
+  if(!fecha || !barbero) return;
+  const ref = db.ref('citas/'+fecha+'/'+barbero);
   ref.on('value', snapshot=>{
     generarHoras();
     const citas = snapshot.val()||{};
@@ -129,13 +177,14 @@ document.getElementById('citaForm').addEventListener('submit', function(e){
   db.ref('citas/'+fecha+'/'+barbero+'/'+hora).set({nombre,apellido,telefono});
 
   // Abrir WhatsApp
-  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
+  const mensaje=`🤗 Hola! Quiero agendar una cita 💈:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
   const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
   window.open(waUrl,'_blank');
   alert('Cita agendada correctamente!');
   document.getElementById('citaForm').reset();
   horaSelect.innerHTML='';
 });
+
 generarHoras();
 </script>
 </body>
