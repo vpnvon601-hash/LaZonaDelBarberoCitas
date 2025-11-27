@@ -135,7 +135,7 @@
         // Importaciones de Firebase (URLs CDN v11.6.1)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Establecer el nivel de registro de Firestore a Debug
         setLogLevel('debug');
@@ -170,17 +170,18 @@
             'Corte': { price: '18.000', duration: 30 },
             'Corte + Ceja': { price: '22.000', duration: 40 },
             'Corte + Ceja + Barba': { price: '25.000', duration: 60 },
-            'Corte + Limpieza Facial': { price: '65.000', duration: 130 },
+            // La duración de 2.3 horas (130 minutos) se maneja correctamente aquí.
+            'Corte + Limpieza Facial': { price: '65.000', duration: 130 }, 
         };
 
         // Horario Operacional (en minutos desde la medianoche)
         const OPENING_TIME = 600; // 10:00 AM (10 * 60)
         const CLOSING_TIME = 1240; // 8:40 PM (20 * 60 + 40)
+        const TIME_STEP = 10; // Intervalo de inicio para citas (cada 10 minutos)
 
         // Estado de la aplicación
         let db, auth;
         let currentUserId = null;
-        let allAppointments = [];
         let isAuthReady = false;
 
         // --- MANEJO DE UI Y ESTADO ---
@@ -253,20 +254,19 @@
         
         /** Normaliza una fecha ISO (YYYY-MM-DD) para consistencia. */
         function normalizeDate(dateString) {
+             // Esta función es vital para evitar problemas de zona horaria al comparar fechas
              const date = new Date(dateString);
-             // Ajusta a la zona horaria local y luego formatea
+             // Retorna la fecha en formato YYYY-MM-DD
              return date.toISOString().split('T')[0];
         }
 
 
         // --- LÓGICA DE DISPONIBILIDAD DE HORARIO (CORE) ---
 
-        /** * Calcula y filtra las horas disponibles.
-         * @param {string} barberId - ID del barbero seleccionado.
-         * @param {string} selectedDate - Fecha seleccionada (YYYY-MM-DD).
-         * @param {number} duration - Duración del servicio en minutos.
-         * @param {Array<Object>} existingAppointments - Citas ya agendadas.
-         * @returns {Array<string>} Lista de horas disponibles en formato HH:MM.
+        /** * Calcula y filtra las horas disponibles para un servicio de duración variable.
+         * La lógica asegura que:
+         * 1. El servicio quepa dentro del horario 10:00 AM (600 min) - 8:40 PM (1240 min).
+         * 2. No se solape con citas ya agendadas.
          */
         function getAvailableTimes(barberId, selectedDate, duration, existingAppointments) {
             const availableTimes = [];
@@ -279,29 +279,30 @@
             // Convertir citas a bloques de tiempo ocupado [startMin, endMin)
             const occupiedSlots = filteredAppointments.map(appt => {
                 const startMin = timeToMinutes(appt.time);
-                const endMin = startMin + appt.duration;
+                // La duración guardada de la cita es crucial
+                const endMin = startMin + appt.duration; 
                 return { start: startMin, end: endMin };
             });
 
-            // 2. Generar posibles horas de inicio cada 10 minutos
-            for (let startMin = OPENING_TIME; startMin < CLOSING_TIME; startMin += 10) {
+            // 2. Iterar sobre posibles horas de inicio cada 10 minutos
+            for (let startMin = OPENING_TIME; startMin < CLOSING_TIME; startMin += TIME_STEP) {
                 const endMin = startMin + duration;
 
-                // 3. Verificar si el servicio cabe antes de la hora de cierre (8:40 PM)
+                // 3. **VERIFICACIÓN CRÍTICA**: Verificar si el servicio cabe antes de la hora de cierre (8:40 PM).
+                // Un servicio DEBE finalizar a más tardar a CLOSING_TIME (1240 min).
                 if (endMin > CLOSING_TIME) {
-                    continue; // No cabe
+                    // Si el servicio termina después de las 8:40 PM, se detiene la búsqueda 
+                    // ya que las horas siguientes tampoco servirán.
+                    break;
                 }
 
                 let isSlotAvailable = true;
 
-                // 4. Verificar solapamiento con citas existentes
+                // 4. Verificar solapamiento con citas existentes (BLOQUEO DINÁMICO)
                 for (const slot of occupiedSlots) {
-                    // Un slot está ocupado si el nuevo servicio (startMin, endMin) se solapa con el slot existente (slot.start, slot.end).
-                    // Solapamiento ocurre si:
-                    // A) El nuevo inicio está DENTRO del slot existente (startMin >= slot.start && startMin < slot.end)
-                    // B) El nuevo fin está DENTRO del slot existente (endMin > slot.start && endMin <= slot.end)
-                    // C) El slot existente está DENTRO del nuevo servicio (startMin <= slot.start && endMin >= slot.end)
-                    
+                    // Criterio de Solapamiento para intervalos [a, b) y [c, d): a < d && c < b
+                    // Nuevo Servicio: [startMin, endMin)
+                    // Cita Existente: [slot.start, slot.end)
                     if (startMin < slot.end && endMin > slot.start) {
                         isSlotAvailable = false;
                         break;
@@ -322,6 +323,7 @@
         async function fetchAppointmentsAndRefreshTimes() {
             if (!isAuthReady || !db) return;
 
+            // Mostrar estado de carga
             elements.timeSelect.innerHTML = '<option value="" disabled selected>Cargando disponibilidad...</option>';
             elements.timeSelect.disabled = true;
             elements.loadingMessage.classList.remove('hidden');
@@ -341,13 +343,12 @@
             const duration = SERVICES[serviceName].duration;
             
             try {
-                // Obtener citas (usamos onSnapshot para mantener la reactividad, aunque aquí un getDocs sería suficiente)
-                // Usaremos getDocs para esta función, y onSnapshot general para allAppointments
+                // Obtener citas solo para la fecha seleccionada para optimizar la consulta
                 const collectionRef = collection(db, FIREBASE_COLLECTION_PATH);
-                const q = query(collectionRef, where('date', '==', date));
+                const q = query(collectionRef, where('date', '==', normalizeDate(date)));
                 const snapshot = await getDocs(q);
                 
-                // Mapear los documentos a un formato de cita simple para el cálculo
+                // Mapear los documentos a un formato de cita simple
                 const appointmentsOnDate = snapshot.docs.map(doc => doc.data());
 
                 const availableTimes = getAvailableTimes(barberId, date, duration, appointmentsOnDate);
@@ -379,9 +380,7 @@
         
         /** Maneja los cambios en los selectores para actualizar la disponibilidad. */
         function handleSelectionChange() {
-            const barberId = elements.barberSelect.value;
             const serviceName = elements.serviceSelect.value;
-            const date = elements.dateInput.value;
             
             // Mostrar información del servicio
             if (serviceName) {
@@ -391,18 +390,156 @@
                 elements.serviceInfo.textContent = '';
             }
             
-            // Si falta cualquier selección clave, no calcular disponibilidad
-            if (!barberId || !serviceName || !date) {
-                elements.timeSelect.innerHTML = '<option value="" disabled selected>Selecciona Barbero, Servicio y Fecha primero</option>';
-                elements.timeSelect.disabled = true;
-                return;
+            // Forzar recálculo si todos los campos están llenos
+            const barberId = elements.barberSelect.value;
+            const date = elements.dateInput.value;
+            if (barberId && serviceName && date) {
+                fetchAppointmentsAndRefreshTimes();
+            } else {
+                 elements.timeSelect.innerHTML = '<option value="" disabled selected>Selecciona Barbero, Servicio y Fecha primero</option>';
+                 elements.timeSelect.disabled = true;
+                 elements.loadingMessage.classList.add('hidden');
+                 elements.noSlotsMessage.classList.add('hidden');
             }
-
-            fetchAppointmentsAndRefreshTimes();
         }
 
         async function handleFormSubmit(e) {
             e.preventDefault();
             
             elements.submitBtn.disabled = true;
-            elements.submit
+            elements.submitBtn.textContent = 'Agendando...';
+            elements.messageBox.classList.add('hidden');
+
+            const serviceName = elements.serviceSelect.value;
+            const duration = SERVICES[serviceName].duration;
+            const price = SERVICES[serviceName].price;
+
+            const appointmentData = {
+                // Información Personal
+                name: document.getElementById('name').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+
+                // Información de la Cita
+                barberId: elements.barberSelect.value,
+                serviceName: serviceName,
+                date: normalizeDate(elements.dateInput.value), // Fecha normalizada (YYYY-MM-DD)
+                time: elements.timeSelect.value, // Hora de inicio (HH:MM)
+                duration: duration,
+                price: price,
+                
+                // Metadata
+                bookedAt: new Date().toISOString(),
+                userId: currentUserId,
+            };
+
+            try {
+                // 1. Re-verificar la disponibilidad justo antes de guardar (protección contra concurrencia)
+                const collectionRef = collection(db, FIREBASE_COLLECTION_PATH);
+                const q = query(collectionRef, where('date', '==', appointmentData.date));
+                const snapshot = await getDocs(q);
+                const appointmentsOnDate = snapshot.docs.map(doc => doc.data());
+                
+                const availableTimes = getAvailableTimes(appointmentData.barberId, appointmentData.date, appointmentData.duration, appointmentsOnDate);
+                
+                if (!availableTimes.includes(appointmentData.time)) {
+                     displayMessage("El horario seleccionado ya no está disponible. Por favor, selecciona otra hora.", 'error');
+                     elements.submitBtn.disabled = false;
+                     elements.submitBtn.textContent = 'Confirmar Cita y Enviar WhatsApp';
+                     // Recalcular y actualizar la lista de horas
+                     fetchAppointmentsAndRefreshTimes(); 
+                     return;
+                }
+                
+                // 2. Guardar en Firestore
+                await addDoc(collection(db, FIREBASE_COLLECTION_PATH), appointmentData);
+                
+                displayMessage("Cita agendada con éxito. Redirigiendo a WhatsApp para confirmación...", 'success');
+                
+                // 3. Generar y Redirigir a WhatsApp
+                const fullDateTime = `${appointmentData.date} a las ${appointmentData.time}`;
+                const waMessage = 
+                    `¡Hola! Acabo de agendar una cita en LA ZONA DEL BARBERO.\n\n` +
+                    `Detalles de la Cita:\n` +
+                    `👤 Cliente: ${appointmentData.name} ${appointmentData.lastName}\n` +
+                    `💇 Barbero: ${appointmentData.barberId}\n` +
+                    `✂️ Servicio: ${appointmentData.serviceName} ($${appointmentData.price} COP)\n` +
+                    `📅 Fecha y Hora: ${fullDateTime}\n` +
+                    `📞 Contacto: ${appointmentData.phone}\n\n` +
+                    `¡Gracias!`;
+                    
+                const waApiUrl = `https://api.whatsapp.com/send?phone=573233489369&text=${encodeURIComponent(waMessage)}`;
+                
+                // Abrir en nueva pestaña
+                window.open(waApiUrl, '_blank');
+                
+                // 4. Limpiar formulario
+                elements.form.reset();
+                handleSelectionChange(); // Restablecer selectores de hora
+                
+            } catch (error) {
+                console.error("Error al guardar la cita:", error);
+                displayMessage(`Error al agendar la cita: ${error.message}. Por favor, inténtalo de nuevo.`, 'error');
+            } finally {
+                elements.submitBtn.disabled = false;
+                elements.submitBtn.textContent = 'Confirmar Cita y Enviar WhatsApp';
+            }
+        }
+
+
+        // --- INICIALIZACIÓN DE FIREBASE ---
+        
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // 1. Autenticación
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // 2. Listener de estado de autenticación
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        elements.userIdDisplay.textContent = `ID de Usuario: ${currentUserId}`;
+                        isAuthReady = true;
+                        // Forzar el recálculo inicial una vez que la autenticación esté lista
+                        handleSelectionChange();
+                    } else {
+                        currentUserId = crypto.randomUUID(); 
+                        elements.userIdDisplay.textContent = `ID de Usuario (Anónimo): ${currentUserId.substring(0, 8)}...`;
+                        isAuthReady = true;
+                        handleSelectionChange();
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error al inicializar Firebase o autenticar:", error);
+                displayMessage("Error fatal de conexión con la base de datos.", 'error');
+            }
+        }
+        
+        // --- INICIO DE LA APLICACIÓN ---
+        window.onload = () => {
+            populateSelectors();
+            initFirebase();
+            
+            // Añadir Listeners de Eventos
+            elements.barberSelect.addEventListener('change', handleSelectionChange);
+            elements.serviceSelect.addEventListener('change', handleSelectionChange);
+            elements.dateInput.addEventListener('change', handleSelectionChange);
+            elements.form.addEventListener('submit', handleFormSubmit);
+
+            // La llamada a handleSelectionChange() inicial se hace dentro de onAuthStateChanged
+        };
+
+    </script>
+</body>
+</html>
+
