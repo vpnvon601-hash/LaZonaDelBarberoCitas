@@ -5,154 +5,90 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LA ZONA DEL BARBERO — Agendamiento</title>
   <style>
-    /* Monocromo: negro, blanco y grises */
     :root{--bg:#fff;--card:#f7f7f7;--muted:#8f8f8f;--line:#e6e6e6;--text:#0b0b0b;--accent:#000}
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,system-ui,Arial,Helvetica,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
-    .container{max-width:1100px;margin:26px auto;padding:20px}
-    header{display:flex;align-items:center;gap:16px;justify-content:space-between}
-    .brand{font-weight:800;font-size:20px;letter-spacing:1px}
-    .subtitle{font-size:13px;color:var(--muted)}
-
-    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-top:18px}
-    @media (max-width:980px){.grid{grid-template-columns:1fr}}
-
-    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.04)}
-    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
-    input[type=text], input[type=email], input[type=tel], select, input[type=date]{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
-
-    button.primary{background:var(--accent);color:#fff;border:none;padding:12px 14px;border-radius:10px;font-weight:700;cursor:pointer}
-    button.ghost{background:transparent;border:1px solid var(--line);padding:10px 12px;border-radius:8px;cursor:pointer}
-
-    .field{margin-bottom:14px}
-    h3{margin:0 0 10px 0}
-    .info{font-size:13px;color:var(--muted);margin-bottom:8px}
+    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:980px;margin:28px auto;padding:18px}
+    .brand{font-weight:800;font-size:20px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);padding:16px;border-radius:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+    button.primary{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:700}
     .small{font-size:13px;color:var(--muted)}
-
-    .available-list{max-height:260px;overflow:auto;border:1px dashed var(--line);padding:8px;border-radius:8px;background:#fff}
-    .slot{padding:9px;border-radius:8px;margin-bottom:6px;background:transparent;cursor:pointer;border:1px solid transparent}
-    .slot:hover{background:#efefef;border-color:#e0e0e0}
-    .slot.selected{background:#000;color:#fff}
-
-    footer{margin-top:18px;font-size:13px;color:var(--muted)}
-
+    .available-list{max-height:220px;overflow:auto;border:1px dashed var(--line);padding:8px;border-radius:8px;background:#fff}
+    .slot{padding:8px;border-radius:6px;margin-bottom:6px;cursor:pointer}
+    .slot:hover{background:#efefef}
     .loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-
-    .note{font-size:13px;color:var(--muted);margin-top:8px}
-
-    /* Admin view */
-    .admin-toggle{font-size:13px}
-    .appt-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
-    .appt-actions button{margin-left:6px}
-
-    .toast{position:fixed;right:20px;bottom:20px;background:#000;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.15)}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <div class="brand">LA ZONA DEL BARBERO</div>
-        <div class="subtitle">Agendamiento — Minimal • Responsive • Seguro</div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div class="small">Modo Admin</div>
-        <label class="admin-toggle"><input type="checkbox" id="adminToggle"> Mostrar panel</label>
-      </div>
-    </header>
+  <div class="wrap">
+    <div class="brand">LA ZONA DEL BARBERO — Agendamiento</div>
 
     <div class="grid">
-      <div class="card" id="formCard">
+      <!-- FORM -->
+      <div class="card">
         <h3>Reservar cita</h3>
-        <p class="info">Complete los datos. El sistema valida solapamientos, bloquea envíos dobles y verifica disponibilidad en tiempo real.</p>
+        <p class="small">Complete los campos obligatorios. Al confirmar, se guardará en Firestore y se abrirá WhatsApp con el mensaje de confirmación.</p>
 
-        <div class="field"><label>Nombre *</label><input id="nombre" type="text" placeholder="Nombre" required></div>
-        <div class="field"><label>Apellido *</label><input id="apellido" type="text" placeholder="Apellido" required></div>
-        <div class="field"><label>Teléfono *</label><input id="telefono" type="tel" placeholder="+57 3xx xxx xxxx" required></div>
-        <div class="field"><label>Correo electrónico</label><input id="email" type="email" placeholder="ejemplo@correo.com"></div>
+        <label>Nombre *</label><input id="nombre" type="text" placeholder="Nombre">
+        <label>Apellido *</label><input id="apellido" type="text" placeholder="Apellido">
+        <label>Teléfono *</label><input id="telefono" type="tel" placeholder="+57 3xx xxx xxxx">
+        <label>Correo</label><input id="email" type="email" placeholder="ejemplo@correo.com">
 
-        <div class="field"><label>Barbero *</label>
-          <select id="barbero">
-            <option value="Dylan">Dylan</option>
-          </select>
-        </div>
+        <label>Barbero *</label>
+        <select id="barbero" required>
+          <option value="" disabled selected>Selecciona...</option>
+          <option value="Dylan">Dylan</option>
+          <option value="Santiago">Santiago</option>
+          <option value="Alejandro">Alejandro</option>
+          <option value="Leonardo">Leonardo</option>
+        </select>
 
-        <div class="field"><label>Servicio *</label>
-          <select id="servicio">
-            <option value="Corte" data-price="18000" data-duration="30">Corte — $18.000 — 30 min</option>
-            <option value="Corte + Ceja" data-price="22000" data-duration="40">Corte + Ceja — $22.000 — 40 min</option>
-            <option value="Corte + Ceja + Barba" data-price="25000" data-duration="60">Corte + Ceja + Barba — $25.000 — 60 min</option>
-            <option value="Corte + Limpieza Facial" data-price="65000" data-duration="130">Corte + Limpieza Facial — $65.000 — 130 min</option>
-          </select>
-        </div>
+        <label>Servicio *</label>
+        <select id="servicio">
+          <option value="Corte" data-price="18000" data-duration="30">Corte — $18.000 — 30 min</option>
+          <option value="Corte + Ceja" data-price="22000" data-duration="40">Corte + Ceja — $22.000 — 40 min</option>
+          <option value="Corte + Ceja + Barba" data-price="25000" data-duration="60">Corte + Ceja + Barba — $25.000 — 60 min</option>
+          <option value="Corte + Limpieza Facial" data-price="65000" data-duration="130">Corte + Limpieza Facial — $65.000 — 130 min</option>
+        </select>
 
-        <div class="field"><label>Programar Fecha *</label><input id="fecha" type="date"></div>
+        <label>Programar Fecha *</label><input id="fecha" type="date">
+        <label>Programar Hora *</label>
+        <div class="available-list" id="availableList">Seleccione fecha, barbero y servicio para ver horarios.</div>
+        <div style="height:8px"></div>
+        <select id="horaSelect"><option value="">Selecciona una hora...</option></select>
 
-        <div class="field">
-          <label>Programar Hora (horas disponibles) *</label>
-          <div id="horaContainer">
-            <select id="horaSelect"><option value="">Primero elige fecha, barbero y servicio</option></select>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
           <button class="primary" id="btnGuardar">Confirmar y enviar WhatsApp</button>
-          <button class="ghost" id="btnLimpiar">Limpiar</button>
+          <button id="btnLimpiar">Limpiar</button>
           <div id="status" style="margin-left:8px"></div>
         </div>
 
-        <div class="note">Horario operativo: 10:00 — 20:40. La aplicación verifica disponibilidad en tiempo real y evita solapamientos.</div>
-
-        <div id="confirmation" style="display:none;margin-top:12px" class="card">
-          <h4>Confirmación</h4>
-          <div id="confText" class="small"></div>
-          <div style="height:8px"></div>
-          <button class="primary" id="confSend">Enviar a WhatsApp</button>
-        </div>
+        <div style="margin-top:10px" class="small">Horario operativo: 10:00 — 20:40</div>
       </div>
 
+      <!-- RESUMEN -->
       <div class="card">
-        <h3>Resumen / Disponibilidad</h3>
+        <h4>Resumen</h4>
         <div class="small">Servicio: <strong id="summaryService">-</strong></div>
         <div class="small">Duración: <strong id="summaryDuration">-</strong> min</div>
-        <div class="small">Barbero: <strong id="summaryBarbero">Dylan</strong></div>
-        <div style="height:12px"></div>
-        <h4 style="margin:10px 0 6px 0">Horas disponibles</h4>
-        <div class="available-list" id="availableList">Elija fecha, servicio y barbero para ver horas disponibles.</div>
-
-        <div style="height:12px"></div>
-        <h4 style="margin:10px 0 6px 0">Últimas citas (fecha seleccionada)</h4>
-        <div id="lastList" class="small" style="max-height:220px;overflow:auto"></div>
+        <div style="height:10px"></div>
+        <h4>Horas disponibles</h4>
+        <div id="slotsBox" class="available-list small">Sin selección aún.</div>
       </div>
     </div>
-
-    <div id="adminPanel" style="display:none;margin-top:18px" class="card">
-      <h3>Panel de Administración</h3>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <select id="adminBarbero"><option value="all">Todos los barberos</option><option value="Dylan">Dylan</option></select>
-        <input type="date" id="adminFecha">
-        <button class="ghost" id="adminFilter">Filtrar</button>
-      </div>
-      <div id="adminList" style="max-height:360px;overflow:auto"></div>
-    </div>
-
-    <footer class="card" style="margin-top:18px">
-      <div><strong>Persistencia:</strong> Google Cloud Firestore (colección: <code>appointments</code>).</div>
-      <div style="margin-top:6px" class="small">Autenticación preferible para admin. Revisa reglas de seguridad en tu consola Firebase.</div>
-    </footer>
   </div>
 
-  <div id="toast" class="toast" style="display:none"></div>
-
   <script type="module">
+    // Firebase modular imports (v10+)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
     import { getAuth, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp,
-      onSnapshot, deleteDoc, doc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
@@ -165,226 +101,178 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+    getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Constantes de horario
+    // Horario (minutos desde 00:00)
     const OPEN_MIN = 10*60; // 10:00
     const CLOSE_MIN = 20*60 + 40; // 20:40
-    const STEP_MIN = 10; // granularity
+    const STEP_MIN = 10; // pasos de 10 minutos
 
-    // Elementos
+    // DOM
     const servicioEl = document.getElementById('servicio');
     const barberoEl = document.getElementById('barbero');
     const fechaEl = document.getElementById('fecha');
     const horaSelect = document.getElementById('horaSelect');
-    const btnGuardar = document.getElementById('btnGuardar');
-    const btnLimpiar = document.getElementById('btnLimpiar');
     const availableList = document.getElementById('availableList');
-    const lastList = document.getElementById('lastList');
+    const slotsBox = document.getElementById('slotsBox');
     const summaryService = document.getElementById('summaryService');
     const summaryDuration = document.getElementById('summaryDuration');
-    const summaryBarbero = document.getElementById('summaryBarbero');
-    const confirmation = document.getElementById('confirmation');
-    const confText = document.getElementById('confText');
-    const confSend = document.getElementById('confSend');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const status = document.getElementById('status');
 
-    // Admin
-    const adminToggle = document.getElementById('adminToggle');
-    const adminPanel = document.getElementById('adminPanel');
-    const adminBarbero = document.getElementById('adminBarbero');
-    const adminFecha = document.getElementById('adminFecha');
-    const adminFilter = document.getElementById('adminFilter');
-    const adminList = document.getElementById('adminList');
+    function parseDuration(){ return parseInt(servicioEl.selectedOptions[0].dataset.duration,10); }
+    function minutesToTime(m){ const hh = String(Math.floor(m/60)).padStart(2,'0'); const mm = String(m%60).padStart(2,'0'); return `${hh}:${mm}`; }
 
-    const toastEl = document.getElementById('toast');
+    // Set minimal date = today
+    (function setMinDate(){
+      const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
+      fechaEl.min = `${y}-${m}-${d}`;
+    })();
 
-    function showToast(txt, ms=3000){ toastEl.textContent=txt; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none', ms); }
-
-    function parseDurationFromSelect(){ return parseInt(servicioEl.selectedOptions[0].dataset.duration,10); }
-    function minutesToTime(m){ const h=String(Math.floor(m/60)).padStart(2,'0'); const mm=String(m%60).padStart(2,'0'); return `${h}:${mm}`; }
-
-    // Validaciones
-    function validatePhone(p){ return /^\+?57\s?3\d{2}\s?\d{3}\s?\d{3}$/.test(p) || /^3\d{9}$/.test(p); }
-
-    async function fetchAppointmentsFor(barbero, dateISO){
+    // Fetch appointments for barbero+date
+    async function fetchAppointments(barbero, dateISO){
       const ref = collection(db,'appointments');
       const q = query(ref, where('barbero','==',barbero), where('date','==',dateISO), orderBy('startMinutes'));
       const snap = await getDocs(q);
-      const arr = [];
-      snap.forEach(d=>{ const data=d.data(); data._id=d.id; arr.push(data); });
+      const arr=[];
+      snap.forEach(doc => { arr.push(doc.data()); });
       return arr;
     }
 
-    function buildOccupiedIntervals(appts){
-      // normalize and merge overlapping
-      const iv = appts.map(a=>({start:a.startMinutes, end:a.startMinutes + a.durationMinutes})).sort((x,y)=>x.start-y.start);
+    // Build merged occupied intervals
+    function buildOccupied(appts){
+      const iv = appts.map(a=>({start:a.startMinutes, end:a.startMinutes + a.durationMinutes})).sort((a,b)=>a.start-b.start);
       const merged = [];
       for(const x of iv){
-        if(!merged.length || x.start>merged[merged.length-1].end){ merged.push({...x}); }
-        else{ merged[merged.length-1].end = Math.max(merged[merged.length-1].end, x.end); }
+        if(!merged.length || x.start > merged[merged.length-1].end) merged.push({...x});
+        else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, x.end);
       }
       return merged;
     }
 
-    function isConflict(candidateStart, candidateEnd, occupied){
-      for(const iv of occupied){ if(candidateStart < iv.end && candidateEnd > iv.start) return true; } return false;
-    }
+    function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
-    function computeAvailableSlots(durationMinutes, occupied){
+    function computeSlots(duration, occupied){
       const slots=[];
-      for(let s=OPEN_MIN; s+durationMinutes <= CLOSE_MIN; s+=STEP_MIN){
-        const e = s+durationMinutes;
+      for(let s = OPEN_MIN; s+duration <= CLOSE_MIN; s+=STEP_MIN){
+        const e = s + duration;
         if(!isConflict(s,e,occupied)) slots.push(s);
       }
       return slots;
     }
 
-    // Refresh availability (real-time snapshot for admin usage also exists)
     async function refreshAvailability(){
-      const dateVal = fechaEl.value; const barbero = barberoEl.value; const duration = parseDurationFromSelect();
-      summaryService.textContent = servicioEl.value; summaryDuration.textContent = duration; summaryBarbero.textContent = barbero;
-      if(!dateVal){ availableList.innerHTML='Seleccione una fecha.'; return; }
+      const dateVal = fechaEl.value;
+      const barbero = barberoEl.value;
+      const duration = parseDuration();
+      summaryService.textContent = servicioEl.value;
+      summaryDuration.textContent = duration;
 
-      availableList.innerHTML = '<div class=\"small\">Cargando disponibilidad... <span class=\"loader\"></span></div>';
+      if(!dateVal || !barbero){ availableList.innerHTML = 'Seleccione fecha y barbero.'; slotsBox.textContent='-'; return; }
+
+      availableList.innerHTML = 'Cargando disponibilidad...';
       try{
-        const appts = await fetchAppointmentsFor(barbero, dateVal);
-        const occupied = buildOccupiedIntervals(appts);
-        const slots = computeAvailableSlots(duration, occupied);
+        const appts = await fetchAppointments(barbero, dateVal);
+        const occupied = buildOccupied(appts);
+        const slots = computeSlots(duration, occupied);
 
         horaSelect.innerHTML = '';
-        if(slots.length===0){ availableList.innerHTML = '<div class=\"small\">No hay horas disponibles para la fecha y servicio seleccionados.</div>'; horaSelect.innerHTML = '<option value=\"\">No disponible</option>'; }
-        else{
-          availableList.innerHTML='';
-          slots.forEach(s=>{
-            const time = minutesToTime(s);
-            const opt = document.createElement('option'); opt.value = s; opt.textContent = time + ` (${duration} min)`; horaSelect.appendChild(opt);
+        slotsBox.innerHTML = '';
 
-            const div = document.createElement('div'); div.className='slot'; div.textContent = time; div.onclick = ()=>{ document.querySelectorAll('.slot').forEach(x=>x.classList.remove('selected')); div.classList.add('selected'); horaSelect.value = s; };
-            availableList.appendChild(div);
+        if(slots.length === 0){
+          availableList.innerHTML = 'No hay horas disponibles para la selección.';
+          horaSelect.innerHTML = '<option value="">No disponible</option>';
+        } else {
+          availableList.innerHTML = '';
+          slots.forEach(s => {
+            const time = minutesToTime(s);
+            // select option
+            const opt = document.createElement('option'); opt.value = s; opt.textContent = time + ` (${duration} min)`;
+            horaSelect.appendChild(opt);
+            // clickable box
+            const div = document.createElement('div'); div.className='slot'; div.textContent = time;
+            div.onclick = ()=> { horaSelect.value = s; document.querySelectorAll('.slot').forEach(x=>x.style.background=''); div.style.background='#000'; div.style.color='#fff'; };
+            slotsBox.appendChild(div);
           });
         }
 
-        lastList.innerHTML='';
-        if(appts.length===0) lastList.innerHTML='<div class=\"small\">Sin citas para esa fecha.</div>';
-        else appts.slice(0,10).forEach(a=>{ const node=document.createElement('div'); node.innerHTML=`<strong>${minutesToTime(a.startMinutes)}</strong> — ${a.servicio} — ${a.nombre} — ${a.telefono}`; lastList.appendChild(node); });
-
-      }catch(err){ console.error(err); availableList.innerHTML='<div class=\"small\">Error cargando disponibilidad.</div>'; }
+      } catch(e){
+        console.error(e); availableList.innerHTML = 'Error cargando disponibilidad.'; slotsBox.textContent='-';
+      }
     }
 
     servicioEl.addEventListener('change', refreshAvailability);
     barberoEl.addEventListener('change', refreshAvailability);
     fechaEl.addEventListener('change', refreshAvailability);
 
-    // Anti-doble envío
-    let submitting = false;
+    // Simple phone validation (Colombia)
+    function validatePhone(p){ return /^\+?57\s?3\d{2}\s?\d{3}\s?\d{3}$/.test(p) || /^3\d{9}$/.test(p); }
 
-    btnLimpiar.addEventListener('click', ()=>{
-      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value=''; horaSelect.innerHTML='<option value=\"\">Primero elige fecha, barbero y servicio</option>'; availableList.innerHTML='Elija fecha, servicio y barbero para ver horas disponibles.'; lastList.innerHTML=''; confirmation.style.display='none';
+    let submitting = false;
+    btnLimpiar.addEventListener('click', ()=> {
+      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value='';
+      horaSelect.innerHTML = '<option value="">Selecciona...</option>'; availableList.innerHTML = 'Seleccione fecha, servicio y barbero.'; slotsBox.innerHTML='';
     });
 
     btnGuardar.addEventListener('click', async ()=>{
-      if(submitting) return showToast('Enviando... espera');
+      if(submitting) return alert('Enviando, espera...');
       const nombre = document.getElementById('nombre').value.trim();
       const apellido = document.getElementById('apellido').value.trim();
       const telefono = document.getElementById('telefono').value.trim();
       const email = document.getElementById('email').value.trim();
-      const barbero = barberoEl.value; const servicio = servicioEl.value; const duration = parseDurationFromSelect();
-      const dateVal = fechaEl.value; const startMinutes = parseInt(horaSelect.value,10);
+      const barbero = barberoEl.value;
+      const servicio = servicioEl.value;
+      const duration = parseDuration();
+      const dateVal = fechaEl.value;
+      const startMinutes = parseInt(horaSelect.value,10);
 
-      if(!nombre||!apellido||!telefono||!dateVal||!startMinutes){ alert('Por favor complete todos los campos obligatorios y seleccione una hora válida.'); return; }
-      if(!validatePhone(telefono)){
-        if(!confirm('El número parece no tener formato +57... ¿Deseas continuar?')) return;
-      }
+      if(!nombre || !apellido || !telefono || !barbero || !dateVal || isNaN(startMinutes)) { alert('Completa todos los campos obligatorios.'); return; }
+      if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
 
-      // No permitir reservar en el pasado
-      const now = new Date();
-      const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10));
-      const apptDate = new Date(y,m-1,d);
-      if(apptDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())){ alert('No puedes reservar en una fecha pasada.'); return; }
+      // no reservar fecha pasada
+      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d);
+      const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      if(apptDate < todayZero){ alert('No puedes reservar en una fecha pasada.'); return; }
 
-      submitting = true; btnGuardar.disabled=true; document.getElementById('status').innerHTML='<span class=\"loader\"></span>';
+      submitting = true; btnGuardar.disabled = true; status.innerHTML = '<span class="loader"></span>';
 
       try{
-        // Verificar disponibilidad actual (doble-check)
-        const appts = await fetchAppointmentsFor(barbero, dateVal);
-        const occupied = buildOccupiedIntervals(appts);
-        if(isConflict(startMinutes, startMinutes + duration, occupied)){
-          alert('La hora seleccionada ya no está disponible. Actualice disponibilidad y elija otra hora.'); submitting=false; btnGuardar.disabled=false; document.getElementById('status').innerHTML=''; return;
-        }
+        // final double-check de disponibilidad
+        const appts = await fetchAppointments(barbero, dateVal);
+        const occupied = buildOccupied(appts);
+        if(isConflict(startMinutes, startMinutes + duration, occupied)){ alert('La hora ya no está disponible. Actualiza disponibilidad y elige otra.'); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
 
         const fullName = `${nombre} ${apellido}`;
-        const docData = { nombre: fullName, telefono, email: email||'', barbero, servicio, durationMinutes: duration, startMinutes, date: dateVal, createdAt: serverTimestamp() };
-
+        const docData = {
+          nombre: fullName,
+          telefono,
+          email: email||'',
+          barbero,
+          servicio,
+          durationMinutes: duration,
+          startMinutes,
+          date: dateVal,
+          createdAt: serverTimestamp()
+        };
         await addDoc(collection(db,'appointments'), docData);
 
-        // Preparar confirmación elegante
+        // Preparar mensaje y abrir WhatsApp
         const horaStr = minutesToTime(startMinutes);
-        confText.innerHTML = `Cliente: <strong>${fullName}</strong><br>Servicio: <strong>${servicio}</strong><br>Barbero: <strong>${barbero}</strong><br>Fecha: <strong>${dateVal}</strong><br>Hora: <strong>${horaStr}</strong>`;
-        confirmation.style.display='block';
+        const text = `Reserva confirmada.%0ACliente: ${fullName}%0AServicio: ${servicio}%0ABarbero: ${barbero}%0AFecha: ${dateVal}%0AHora: ${horaStr}`;
+        const phoneDest = '573233489369';
+        const waLink = `https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(decodeURIComponent(text))}`;
 
-        // Guardado OK
-        showToast('Cita guardada correctamente');
-
-      }catch(err){ console.error(err); alert('Error guardando la cita.'); }
-      finally{ submitting=false; btnGuardar.disabled=false; document.getElementById('status').innerHTML=''; }
+        window.open(waLink, '_blank');
+        alert('Cita guardada y WhatsApp abierto para confirmar.'); // UX
+      } catch(e){
+        console.error(e); alert('Error guardando la cita. Revisa la consola.');
+      } finally{
+        submitting = false; btnGuardar.disabled = false; status.innerHTML = '';
+      }
     });
-
-    // Envío a WhatsApp tras confirmación
-    confSend.addEventListener('click', ()=>{
-      const txt = confText.textContent || confText.innerText;
-      // build message (encoded)
-      const msgPlain = txt.replace(/\n/g,' ').replace(/\s+/g,' ');
-      const destinationNumber = '573233489369';
-      const encoded = encodeURIComponent(msgPlain);
-      window.open(`https://api.whatsapp.com/send?phone=${destinationNumber}&text=${encoded}`,'_blank');
-      showToast('Abriendo WhatsApp...');
-    });
-
-    // Admin panel logic (real-time list con onSnapshot)
-    adminToggle.addEventListener('change', ()=>{ adminPanel.style.display = adminToggle.checked ? 'block' : 'none'; if(adminToggle.checked) attachAdminSnapshot(); });
-
-    let adminUnsub = null;
-    function attachAdminSnapshot(){
-      if(adminUnsub) adminUnsub();
-      const ref = collection(db,'appointments');
-      const q = query(ref, orderBy('date'), orderBy('startMinutes'));
-      adminUnsub = onSnapshot(q, snap=>{
-        adminList.innerHTML='';
-        const docs = [];
-        snap.forEach(d=>{ const data=d.data(); data._id=d.id; docs.push(data); });
-        // filter UI controls
-        const byBarbero = adminBarbero.value; const byDate = adminFecha.value;
-        const filtered = docs.filter(a=> (byBarbero==='all'||a.barbero===byBarbero) && (!byDate||a.date===byDate));
-        if(filtered.length===0) adminList.innerHTML='<div class=\"small\">Sin resultados.</div>';
-        filtered.forEach(a=>{
-          const row = document.createElement('div'); row.className='appt-row';
-          row.innerHTML = `<div><strong>${a.date} ${minutesToTime(a.startMinutes)}</strong><div class="small">${a.servicio} — ${a.nombre} — ${a.telefono}</div></div>`;
-          const actions = document.createElement('div'); actions.className='appt-actions';
-          const btnDel = document.createElement('button'); btnDel.className='ghost'; btnDel.textContent='Eliminar'; btnDel.onclick = async ()=>{ if(confirm('Eliminar cita?')){ await deleteDoc(doc(db,'appointments',a._id)); showToast('Cita eliminada'); } };
-          const btnEdit = document.createElement('button'); btnEdit.className='ghost'; btnEdit.textContent='Marcar realizada'; btnEdit.onclick = async ()=>{ await updateDoc(doc(db,'appointments',a._id), { done: true }); showToast('Marcado'); };
-          actions.appendChild(btnEdit); actions.appendChild(btnDel);
-          row.appendChild(actions);
-          adminList.appendChild(row);
-        });
-      }, err=>{ console.error('snapshot err',err); adminList.innerHTML='<div class="small">Error cargando panel admin.</div>'; });
-    }
-
-    adminFilter.addEventListener('click', ()=>{ attachAdminSnapshot(); });
-
-    // Inicializar fecha mínima y admin fecha
-    (function init(){ const today=new Date(); const yyyy=today.getFullYear(); const mm=String(today.getMonth()+1).padStart(2,'0'); const dd=String(today.getDate()).padStart(2,'0'); fechaEl.min = `${yyyy}-${mm}-${dd}`; adminFecha.min = `${yyyy}-${mm}-${dd}`; })();
-
-    // Autenticación automática si hay token (opcional)
-    (async function tryAutoAuth(){
-      try{ if(window.__initial_auth_token){ await signInWithCustomToken(auth, window.__initial_auth_token); console.log('Autenticado vía token inicial'); }
-      }catch(e){ console.warn('Error en autenticación automática', e); }
-
-      onAuthStateChanged(auth, user=>{
-        if(user){ console.log('Usuario autenticado', user.uid); } else { console.log('No hay usuario autenticado'); }
-      });
-    })();
   </script>
 </body>
 </html>
