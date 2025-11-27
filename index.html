@@ -118,17 +118,26 @@
 
     <!-- Script de Firebase y Lógica de la Aplicación -->
     <script type="module">
-        // Importaciones de Firebase (necesarias para la app)
+        // Importaciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, onSnapshot, collection, query, where, getDocs, Timestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Establecer nivel de log de Firebase para depuración
-        setLogLevel('debug'); 
+        // setLogLevel('debug'); // Usar solo para depuración si es necesario
 
-        // --- Configuración de Entorno (Variables Globales Canvas) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // --- Configuración de Entorno (Usando la configuración del usuario) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
+            authDomain: "lazonadelbarbero-b4e75.firebaseapp.com",
+            projectId: "lazonadelbarbero-b4e75",
+            storageBucket: "lazonadelbarbero-b4e75.firebasestorage.app",
+            messagingSenderId: "251180096928",
+            appId: "1:251180096928:web:86d0ab83c7e444af79d8c5",
+            measurementId: "G-G4YL7M4Z00"
+        };
+        
+        // Usar el projectId como ID de aplicación si no se define la variable de entorno
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         // Número de WhatsApp al que se enviará la confirmación
@@ -142,7 +151,7 @@
             { id: 'corte_limpieza', name: 'Corte + Limpieza Facial', price: 65000, duration: 150 } // 2.5 horas
         ];
 
-        // --- LISTA DE BARBEROS ACTUALIZADA ---
+        // --- LISTA DE BARBEROS (Actualizada) ---
         const BARBERS = [
             { id: 'dylan', name: 'Dylan' },
             { id: 'santiago', name: 'Santiago' },
@@ -313,7 +322,7 @@
          * @returns {string} Ruta de la colección.
          */
         const getAppointmentsCollectionPath = (barberId, dateString) => {
-            // Se usa 'public' para que todos los usuarios puedan ver la disponibilidad de todos los barberos.
+            // Ruta pública para que todos puedan ver la disponibilidad
             return `artifacts/${appId}/public/data/barber_appointments/${barberId}/${dateString}`;
         };
 
@@ -321,6 +330,7 @@
          * Inicia el listener de Firestore para la disponibilidad del barbero/fecha seleccionados.
          */
         const startAvailabilityListener = () => {
+            // Se debe verificar que la base de datos esté lista antes de consultar
             if (!isAuthReady || !db) return;
 
             // Limpiar listener anterior si existe
@@ -365,9 +375,9 @@
                 generateTimeSlots();
 
             }, (error) => {
-                console.error("Error al obtener las citas:", error);
+                console.error("Error de Firestore al obtener las citas (Revisa Reglas de Seguridad):", error);
                 loadingMessage.classList.add('hidden');
-                displayMessage("Error al cargar la disponibilidad. Intenta de nuevo.", 'error');
+                displayMessage("Error al cargar la disponibilidad. Posiblemente un problema con las Reglas de Seguridad.", 'error');
             });
         };
 
@@ -376,35 +386,44 @@
          */
         const initializeFirebase = async () => {
             try {
+                // 1. Inicializar App
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Esperar la resolución del estado de autenticación
-                const authReadyPromise = new Promise((resolve) => {
-                    onAuthStateChanged(auth, async (user) => {
-                        if (!user) {
-                            if (initialAuthToken) {
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } else {
-                                await signInAnonymously(auth);
+                // 2. Autenticación (esperar resolución)
+                const authReadyPromise = new Promise((resolve, reject) => {
+                    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                        unsubscribe(); 
+                        try {
+                            if (!user) {
+                                if (initialAuthToken) {
+                                    await signInWithCustomToken(auth, initialAuthToken);
+                                } else {
+                                    await signInAnonymously(auth);
+                                }
                             }
+                            userId = auth.currentUser?.uid || crypto.randomUUID();
+                            isAuthReady = true;
+                            resolve();
+                        } catch (authError) {
+                            console.error("Error durante el inicio de sesión de Firebase:", authError);
+                            displayMessage("Error fatal: No se pudo iniciar sesión. Revisa las credenciales o reglas de Auth.", 'error');
+                            reject(authError);
                         }
-                        userId = auth.currentUser?.uid || crypto.randomUUID();
-                        isAuthReady = true;
-                        console.log("Firebase Auth listo. User ID:", userId);
-                        resolve();
+                    }, (error) => {
+                        reject(error);
                     });
                 });
 
                 await authReadyPromise;
                 
-                // Cargar datos iniciales (barberos y servicios)
+                // 3. Cargar datos si la autenticación fue exitosa
                 loadStaticOptions();
                 
             } catch (error) {
-                console.error("Error en la inicialización de Firebase:", error);
-                displayMessage("Error fatal: No se pudo conectar a la base de datos.", 'error');
+                console.error("Error CRÍTICO en la inicialización (Configuración Inválida):", error);
+                displayMessage("Error fatal: No se pudo conectar a la base de datos. Revisa la consola y tu archivo de configuración.", 'error');
             }
         };
 
@@ -509,7 +528,6 @@
                 endMinutes: endMinutes,
                 duration: selectedService.duration,
                 price: selectedService.price,
-                // Añadir un campo de verificación de disponibilidad final (opcional pero seguro)
                 verification: 'pending' 
             };
 
@@ -552,8 +570,8 @@ Por favor, confirmar disponibilidad y guardar la cita. ¡Gracias!
                 }, 1500); 
 
             } catch (error) {
-                console.error("Error al guardar la cita en Firestore:", error);
-                displayMessage("Hubo un error al agendar tu cita. Por favor, inténtalo de nuevo.", 'error');
+                console.error("Error al guardar la cita en Firestore (Revisa Reglas de Seguridad):", error);
+                displayMessage("Hubo un error al agendar tu cita. Posiblemente un problema de permisos.", 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Confirmar Cita y Notificar';
