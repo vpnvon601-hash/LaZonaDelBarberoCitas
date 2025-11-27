@@ -70,6 +70,8 @@ h2 { text-align:center; margin-bottom:25px; font-weight:600; color:#fff; }
   margin-bottom: 5px;
   font-size: 14px;
   font-weight: 600;
+  /* CAMBIO 2: TÍTULOS EN MORADO */
+  color: var(--main-purple); 
 }
 /* Estilo para los campos de entrada/selección */
 input[type="text"], input[type="tel"], .custom-select, .custom-input, select, button {
@@ -95,6 +97,8 @@ input::placeholder { color:#aaa; }
   background: var(--input-bg);
   -webkit-appearance: none;
   appearance: none;
+  /* CAMBIO 1: AÑADIR BORDE PÚRPURA */
+  border: 2px solid var(--main-purple); 
 }
 
 /* Selección de Hora (Menú customizado para simular la selección de la imagen) */
@@ -179,7 +183,7 @@ button:hover { background:#5751d0; transform:scale(1.02); }
     </div>
     
     <div class="form-group">
-        <label>Selecciona barbero</label>
+        <label>Selecciona Barbero</label>
         <select id="barbero" required class="custom-select">
             <option value="">Selecciona Barbero</option>
             <option value="Dylan">Dylan</option>
@@ -218,7 +222,7 @@ setTimeout(()=>{
 
 // FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeBPyTkymk6I",
+  apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I", // REEMPLAZAR con tu API Key real si es diferente
   authDomain: "shantybarber-b7b8c.firebaseapp.com",
   databaseURL: "https://shantybarber-b7b8c-default-rtdb.firebaseio.com",
   projectId: "shantybarber-b7b8c",
@@ -253,7 +257,7 @@ function generarHoras(citasOcupadas={}){
   while(start<end){
     let h=Math.floor(start/60), m=start%60;
     let hora = formatHora(h,m);
-    let isUnavailable = citasOcupadas[hora];
+    let isUnavailable = citasOcupadas[hora.replace(/ /g, '_')];
 
     let optionDiv=document.createElement('div');
     optionDiv.className = 'time-option';
@@ -274,7 +278,7 @@ function generarHoras(citasOcupadas={}){
     }
 
     horaOptionsDiv.appendChild(optionDiv);
-    start+=20; // Intervalo de 20 minutos (para generar 10:00, 10:20, 10:40...)
+    start+=20; // Intervalo de 20 minutos
   }
 }
 
@@ -330,13 +334,14 @@ document.getElementById('citaForm').addEventListener('submit', function(e){
       return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
   }
 
-  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); // Reemplazar espacio para clave de Firebase
+  // Guardar en Firebase, reemplazando el espacio por guion bajo para una clave válida
+  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
 
   const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
   const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
   window.open(waUrl,'_blank');
   
-  alert('Cita agendada correctamente!');
+  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
   document.getElementById('citaForm').reset();
   horaSeleccionadaInput.value = '';
   generarHoras({}); // Resetear la lista de horas
