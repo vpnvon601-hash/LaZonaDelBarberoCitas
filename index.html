@@ -1,22 +1,15 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>LA ZONA DEL BARBERO — Agendamiento</title>
   <style>
-    :root{
-      --bg:#0d0d0d;
-      --card:#161616;
-      --muted:#888;
-      --line:#2a2a2a;
-      --text:#fff;
-      --accent:#fff;
-    }
+    :root{--bg:#0d0d0d;--card:#161616;--muted:#888;--line:#2a2a2a;--text:#fff;--accent:#fff}
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,Arial;background:var(--bg);color:var(--text)}
     .wrap{max-width:980px;margin:28px auto;padding:18px}
-    .brand{font-weight:800;font-size:22px;text-align:center;padding:10px 0}
+    .brand{text-align:center;font-weight:800;font-size:22px;padding:10px 0}
     .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
     .card{background:var(--card);padding:16px;border-radius:10px;border:1px solid var(--line)}
@@ -41,19 +34,12 @@
       <!-- FORM -->
       <div class="card">
         <h3>Reservar cita</h3>
-        <p class="small">Complete los campos. Al confirmar se guardará en Firestore y se abrirá WhatsApp.</p>
+        <p class="small">Complete los campos. Al confirmar se guardará en Firebase Realtime Database y se abrirá WhatsApp.</p>
 
-        <label>Nombre *</label>
-        <input id="nombre" type="text" placeholder="Nombre">
-
-        <label>Apellido *</label>
-        <input id="apellido" type="text" placeholder="Apellido">
-
-        <label>Teléfono *</label>
-        <input id="telefono" type="tel" placeholder="+57 3XX XXX XXXX">
-
-        <label>Correo</label>
-        <input id="email" type="email" placeholder="ejemplo@correo.com">
+        <label>Nombre *</label><input id="nombre" type="text" placeholder="Nombre">
+        <label>Apellido *</label><input id="apellido" type="text" placeholder="Apellido">
+        <label>Teléfono *</label><input id="telefono" type="tel" placeholder="+57 3XX XXX XXXX">
+        <label>Correo</label><input id="email" type="email" placeholder="ejemplo@correo.com">
 
         <label>Barbero *</label>
         <select id="barbero">
@@ -72,23 +58,18 @@
           <option value="Corte + Limpieza Facial" data-price="65000" data-duration="130">Corte + Limpieza Facial — $65.000 — 130 min</option>
         </select>
 
-        <label>Fecha *</label>
-        <input id="fecha" type="date">
-
+        <label>Fecha *</label><input id="fecha" type="date">
         <label>Hora *</label>
         <div class="available-list" id="availableList">Selecciona fecha y barbero.</div>
         <div style="height:8px"></div>
 
-        <select id="horaSelect">
-          <option value="">Selecciona hora...</option>
-        </select>
+        <select id="horaSelect"><option value="">Selecciona hora...</option></select>
 
         <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
           <button class="primary" id="btnGuardar">Confirmar y enviar WhatsApp</button>
           <button id="btnLimpiar">Limpiar</button>
           <div id="status" style="margin-left:8px"></div>
         </div>
-
         <div style="margin-top:10px" class="small">Horario operativo: 10:00 — 20:40</div>
       </div>
 
@@ -106,16 +87,17 @@
   </div>
 
   <script type="module">
-    // Firebase imports
+    // Firebase (app + database)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, query, where, getDocs, doc, runTransaction, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      getDatabase, ref, get, child, runTransaction, set, onValue, remove
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Firebase config
+    // === CONFIGURA AQUÍ TU FIREBASE ===
     const firebaseConfig = {
       apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
       authDomain: "lazonadelbarbero-b4e75.firebaseapp.com",
+      databaseURL: "https://lazonadelbarbero-b4e75-default-rtdb.firebaseio.com", // <-- REaltime DB URL
       projectId: "lazonadelbarbero-b4e75",
       storageBucket: "lazonadelbarbero-b4e75.firebasestorage.app",
       messagingSenderId: "251180096928",
@@ -124,9 +106,9 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db = getDatabase(app);
 
-    // Time constants
+    // Time constants (minutes since 00:00)
     const OPEN_MIN = 10*60;
     const CLOSE_MIN = 20*60 + 40;
     const STEP_MIN = 10;
@@ -145,38 +127,36 @@
     const btnLimpiar = document.getElementById('btnLimpiar');
     const status = document.getElementById('status');
 
-    // Utils
     function parseDuration(){ return parseInt(servicioEl.selectedOptions[0].dataset.duration,10); }
     function parsePrice(){ return parseInt(servicioEl.selectedOptions[0].dataset.price,10); }
-    function minutesToTime(m){ const hh = String(Math.floor(m/60)).padStart(2,'0'); const mm = String(m%60).padStart(2,'0'); return `${hh}:${mm}`; }
+    function minutesToTime(m){ const hh=String(Math.floor(m/60)).padStart(2,'0'); const mm=String(m%60).padStart(2,'0'); return `${hh}:${mm}`; }
 
-    // set min date
-    (function setMinDate(){
-      const t=new Date();
-      const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0');
-      fechaEl.min = `${y}-${m}-${d}`;
-    })();
+    // min date
+    (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
 
-    // fetch appointments (no orderBy to avoid composite-index requirement)
-    async function fetchAppointments(barbero, dateISO){
-      const ref = collection(db,'appointments');
-      const q = query(ref, where('barbero','==',barbero), where('date','==',dateISO));
-      const snap = await getDocs(q);
-      const arr=[];
-      snap.forEach(d=>{
-        const data = d.data();
-        // Attach id if present
-        data._id = d.id;
-        arr.push(data);
-      });
-      // sort client-side by startMinutes
-      arr.sort((a,b)=>a.startMinutes - b.startMinutes);
+    // Fetch appointments from Realtime DB for barbero/date
+    async function fetchAppointmentsRT(barbero, dateISO){
+      const path = `appointments/${barbero}/${dateISO}`;
+      const snap = await get(child(ref(db), path));
+      const arr = [];
+      if(snap.exists()){
+        const val = snap.val(); // object of startMinutes => data
+        for(const key of Object.keys(val)){
+          const a = val[key];
+          a._id = key;
+          // ensure numbers
+          a.startMinutes = Number(a.startMinutes);
+          a.durationMinutes = Number(a.durationMinutes);
+          arr.push(a);
+        }
+        arr.sort((a,b)=>a.startMinutes - b.startMinutes);
+      }
       return arr;
     }
 
     function buildOccupied(appts){
-      const iv = appts.map(a=>({start:a.startMinutes, end:a.startMinutes+a.durationMinutes})).sort((a,b)=>a.start-b.start);
-      const merged=[];
+      const iv = appts.map(a=>({start:a.startMinutes, end:a.startMinutes + a.durationMinutes})).sort((a,b)=>a.start-b.start);
+      const merged = [];
       for(const x of iv){
         if(!merged.length || x.start > merged[merged.length-1].end) merged.push({...x});
         else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, x.end);
@@ -184,49 +164,35 @@
       return merged;
     }
 
-    function isConflict(s,e,occupied){
-      return occupied.some(iv=> s < iv.end && e > iv.start);
-    }
+    function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
     function computeSlots(duration, occupied){
-      const out=[];
-      for(let s=OPEN_MIN; s+duration<=CLOSE_MIN; s+=STEP_MIN){
+      const out = [];
+      for(let s = OPEN_MIN; s + duration <= CLOSE_MIN; s += STEP_MIN){
         const e = s + duration;
         if(!isConflict(s,e,occupied)) out.push(s);
       }
       return out;
     }
 
-    // UI refresh
+    // Refresh availability (reads RTDB once)
     async function refreshAvailability(){
-      const dateVal = fechaEl.value;
-      const barbero = barberoEl.value;
-      const duration = parseDuration();
-
-      summaryService.textContent = servicioEl.value;
-      summaryDuration.textContent = duration;
-      summaryPrice.textContent = `$${parsePrice().toLocaleString('es-CO')}`;
+      const dateVal = fechaEl.value; const barbero = barberoEl.value; const duration = parseDuration();
+      summaryService.textContent = servicioEl.value; summaryDuration.textContent = duration; summaryPrice.textContent = `$${parsePrice().toLocaleString('es-CO')}`;
 
       if(!dateVal || !barbero){
-        availableList.innerHTML='Selecciona fecha y barbero.';
-        slotsBox.textContent='-';
-        horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
-        return;
+        availableList.innerHTML = 'Selecciona fecha y barbero.'; slotsBox.textContent='-'; horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; return;
       }
 
       availableList.innerHTML = '<div class="small">Cargando disponibilidad... <span class="loader"></span></div>';
       try{
-        const appts = await fetchAppointments(barbero,dateVal);
+        const appts = await fetchAppointmentsRT(barbero, dateVal);
         const occupied = buildOccupied(appts);
-        const slots = computeSlots(duration,occupied);
+        const slots = computeSlots(duration, occupied);
 
-        horaSelect.innerHTML = '';
-        slotsBox.innerHTML = '';
-
-        if(slots.length===0){
-          availableList.innerHTML='No hay horas disponibles.';
-          horaSelect.innerHTML = '<option value="">No disponible</option>';
-          return;
+        horaSelect.innerHTML = ''; slotsBox.innerHTML = '';
+        if(slots.length === 0){
+          availableList.innerHTML = 'No hay horas disponibles.'; horaSelect.innerHTML = '<option value="">No disponible</option>'; return;
         }
 
         availableList.innerHTML = '';
@@ -235,21 +201,12 @@
           const opt = document.createElement('option'); opt.value = s; opt.textContent = time + ` (${duration} min)`;
           horaSelect.appendChild(opt);
 
-          const div = document.createElement('div');
-          div.className = 'slot';
-          div.textContent = time;
-          div.onclick = ()=>{
-            horaSelect.value = s;
-            document.querySelectorAll('.slot').forEach(x=>{ x.style.background='#0b0b0b'; x.style.color='#fff'; });
-            div.style.background = '#fff';
-            div.style.color = '#000';
-          };
+          const div = document.createElement('div'); div.className='slot'; div.textContent=time;
+          div.onclick = ()=>{ horaSelect.value = s; document.querySelectorAll('.slot').forEach(x=>{ x.style.background='#0b0b0b'; x.style.color='#fff'; }); div.style.background='#fff'; div.style.color='#000'; };
           slotsBox.appendChild(div);
         });
       } catch(err){
-        console.error(err);
-        availableList.innerHTML='Error cargando disponibilidad.';
-        slotsBox.textContent='-';
+        console.error(err); availableList.innerHTML='Error cargando disponibilidad.'; slotsBox.textContent='-';
       }
     }
 
@@ -257,21 +214,16 @@
     barberoEl.addEventListener('change', refreshAvailability);
     fechaEl.addEventListener('change', refreshAvailability);
 
-    // basic phone validation
+    // validation
     function validatePhone(p){ return /^\+?57\s?3\d{2}\s?\d{3}\s?\d{3}$/.test(p) || /^3\d{9}$/.test(p); }
 
     // clear
     btnLimpiar.addEventListener('click', ()=>{
-      document.getElementById('nombre').value='';
-      document.getElementById('apellido').value='';
-      document.getElementById('telefono').value='';
-      document.getElementById('email').value='';
-      horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
-      availableList.innerHTML = 'Selecciona fecha y barbero.';
-      slotsBox.innerHTML = '';
+      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value=''; horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona fecha y barbero.'; slotsBox.innerHTML='';
     });
 
-    // submit
+    // submit with transaction on parent node (barbero/date)
+    let submitting=false;
     btnGuardar.addEventListener('click', async ()=>{
       if(submitting) return;
       const nombre = document.getElementById('nombre').value.trim();
@@ -284,111 +236,77 @@
       const dateVal = fechaEl.value;
       const startMinutes = parseInt(horaSelect.value,10);
 
-      if(!nombre || !apellido || !telefono || !barbero || !dateVal || isNaN(startMinutes)){
-        alert('Completa todos los campos obligatorios.');
-        return;
-      }
+      if(!nombre||!apellido||!telefono||!barbero||!dateVal||isNaN(startMinutes)){ alert('Completa todos los campos obligatorios.'); return; }
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
 
-      // prevent past times on same day
-      const today = new Date();
-      const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10));
-      const apptDate = new Date(y,m-1,d);
-      const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      // prevent past date
+      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       if(apptDate < todayZero){ alert('No puedes reservar en una fecha pasada.'); return; }
 
       submitting = true; btnGuardar.disabled = true; status.innerHTML = '<span class="loader"></span>';
 
       try{
-        // double-check availability (fresh)
-        const appts = await fetchAppointments(barbero,dateVal);
+        // fetch current appointments (fresh)
+        const appts = await fetchAppointmentsRT(barbero, dateVal);
         const occupied = buildOccupied(appts);
         if(isConflict(startMinutes, startMinutes + duration, occupied)){
           alert('La hora ya no está disponible. Actualiza disponibilidad y elige otra.');
-          submitting = false; btnGuardar.disabled = false; status.innerHTML = '';
-          return;
+          submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return;
         }
 
-        // Attempt an atomic-ish write using deterministic doc id to avoid exact-duplicates:
-        const docId = `${barbero}_${dateVal}_${startMinutes}`.replace(/\s+/g,'_');
-        const apptRef = doc(collection(db,'appointments')).withConverter ? doc(collection(db,'appointments')) : doc(collection(db,'appointments')); // keep reference
+        // Transaction on parent node: appointments/{barbero}/{date}
+        const parentPath = `appointments/${barbero}/${dateVal}`;
+        const parentRef = ref(db, parentPath);
 
-        // We do a transaction that checks if the deterministic ID exists.
-        // NOTE: This prevents writing two docs with same startMinutes for same barbero+date.
-        // It does NOT fully prevent overlapping appointments with different startMinutes (rare race).
-        try{
-          await runTransaction(db, async (tx)=>{
-            // check if exact-id exists
-            const targetRef = doc(db,'appointments', docId);
-            // tx.get on a doc
-            const snapshot = await tx.get ? await tx.get(targetRef) : null;
-            if(snapshot && snapshot.exists && snapshot.exists()){
-              throw new Error('EXISTS');
-            }
-            // still check again current appointments (read outside transaction earlier)
-            // If no conflict, create
-            const payload = {
-              nombre: `${nombre} ${apellido}`,
-              telefono,
-              email: email||'',
-              barbero,
-              servicio,
-              durationMinutes: duration,
-              startMinutes,
-              date: dateVal,
-              priceCOP: parsePrice(),
-              createdAt: serverTimestamp()
-            };
-            // If tx.set supported:
-            if(tx.set){
-              tx.set(targetRef, payload);
-            } else {
-              // fallback: if transaction object doesn't expose set (older sdk), throw to fall back to addDoc
-              throw new Error('NO_TX_SET');
-            }
-          });
-        } catch(txErr){
-          // If transaction succeeded then we reach here only if NO error; otherwise handle
-          if(String(txErr).includes('EXISTS')){
-            alert('La hora ya fue tomada. Actualiza disponibilidad.');
-            submitting = false; btnGuardar.disabled = false; status.innerHTML='';
-            return;
-          }
-          if(String(txErr).includes('NO_TX_SET')){
-            // fallback: perform a safe addDoc (best-effort)
-            const payload = {
-              nombre: `${nombre} ${apellido}`,
-              telefono,
-              email: email||'',
-              barbero,
-              servicio,
-              durationMinutes: duration,
-              startMinutes,
-              date: dateVal,
-              priceCOP: parsePrice(),
-              createdAt: serverTimestamp()
-            };
-            await addDoc(collection(db,'appointments'), payload);
-          } else {
-            // If other error, rethrow
-            throw txErr;
-          }
-        }
+        const payload = {
+          nombre: `${nombre} ${apellido}`,
+          telefono,
+          email: email || '',
+          barbero,
+          servicio,
+          durationMinutes: duration,
+          startMinutes,
+          date: dateVal,
+          priceCOP: parsePrice(),
+          createdAt: Date.now()
+        };
 
-        // Success: open WhatsApp
+        // runTransaction: read entire node, check overlap, then set child [startMinutes] = payload
+        await runTransaction(parentRef, (current) => {
+          if(current === null) current = {};
+          // build occupied from current
+          const existing = Object.values(current).map(x => ({ start: Number(x.startMinutes), end: Number(x.startMinutes) + Number(x.durationMinutes) }));
+          existing.sort((a,b)=>a.start-b.start);
+          // merge
+          const merged = [];
+          for(const it of existing){
+            if(!merged.length || it.start > merged[merged.length-1].end) merged.push({...it});
+            else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, it.end);
+          }
+          // check conflict
+          const s = startMinutes; const e = startMinutes + duration;
+          for(const iv of merged) if(s < iv.end && e > iv.start) { throw new Error('CONFLICT'); }
+
+          // if ok, set child
+          const key = String(startMinutes);
+          current[key] = payload;
+          return current;
+        });
+
+        // If transaction succeeded
         const horaStr = minutesToTime(startMinutes);
         const price = parsePrice();
         const msg = `Reserva confirmada.%0ACliente: ${nombre} ${apellido}%0AServicio: ${servicio} — $${price.toLocaleString('es-CO')}%0ABarbero: ${barbero}%0AFecha: ${dateVal}%0AHora: ${horaStr}`;
-        const phoneDest = '573233489369';
-        const waLink = `https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(decodeURIComponent(msg))}`;
-        window.open(waLink, '_blank');
+        const phoneDest = '573233489369'; // +57 323 3489369
+        window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(decodeURIComponent(msg))}`, '_blank');
 
         alert('Cita guardada correctamente.');
       } catch(err){
-        console.error('Error guardando cita:', err);
-        alert('Error guardando la cita. Revisa la consola.');
-      } finally{
-        submitting = false; btnGuardar.disabled = false; status.innerHTML = '';
+        console.error('Transaction error:', err);
+        if(String(err).includes('CONFLICT')) alert('La hora no está disponible (conflicto).');
+        else alert('Error guardando la cita. Revisa la consola.');
+      } finally {
+        submitting=false; btnGuardar.disabled=false; status.innerHTML='';
       }
     });
   </script>
