@@ -8,27 +8,44 @@
 <style>
 * { box-sizing: border-box; margin:0; padding:0; }
 body, html { height:100%; font-family:'Montserrat',sans-serif; }
-body { background: linear-gradient(135deg, #111, #222); display:flex; justify-content:center; align-items:center; }
+body { background: linear-gradient(135deg,#111,#222); display:flex; justify-content:center; align-items:center; }
+
+/* SPLASH PROFESIONAL */
 #splash {
   position:fixed; top:0; left:0; width:100%; height:100%;
-  background:#000; display:flex; justify-content:center; align-items:center; color:#fff; font-size:2em; z-index:9999;
-  flex-direction: column;
+  background: linear-gradient(135deg, #111, #1c1c1c);
+  display:flex; justify-content:center; align-items:center;
+  flex-direction: column; color:#fff; font-family:'Montserrat',sans-serif;
+  z-index:9999; overflow:hidden;
+}
+.splash-logo {
+  font-size:2.2em; font-weight:700; letter-spacing:2px;
+  text-transform: uppercase; color:#6c63ff;
+  animation: pulse 1.5s infinite;
 }
 .loader {
   border: 6px solid #333;
   border-top: 6px solid #6c63ff;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   animation: spin 1s linear infinite;
-  margin-bottom: 15px;
+  margin-top: 20px;
 }
 @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+@keyframes pulse {
+  0%,100% { transform: scale(1); opacity:1; }
+  50% { transform: scale(1.1); opacity:0.7; }
+}
+.fade-out { animation: fadeOut 0.8s forwards; }
+@keyframes fadeOut { from {opacity:1;} to {opacity:0; visibility:hidden;} }
 
+/* FORMULARIO */
 .container {
   background-color:#1c1c1c; color:#fff;
   padding:40px 30px; border-radius:20px; width:90%; max-width:400px;
   box-shadow:0 15px 30px rgba(0,0,0,0.5);
+  display:none;
   animation: fadeIn 0.8s ease;
 }
 @keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
@@ -43,9 +60,9 @@ button {
   background:#6c63ff; color:#fff; font-weight:600; cursor:pointer;
 }
 button:hover { background:#5751d0; transform:scale(1.02); }
-
 option.unavailable { color:red; font-weight:bold; }
 
+/* FECHA */
 .fechaInput {
   position: relative;
   background:#333; color:#fff; border-radius:10px; padding:14px; border:none; font-size:16px;
@@ -62,8 +79,17 @@ option.unavailable { color:red; font-weight:bold; }
 }
 .fechaInput:focus::before,
 .fechaInput[value]:not([value=""])::before { content: ""; }
+.fechaInput::-webkit-clear-button,
+.fechaInput::-webkit-inner-spin-button,
+.fechaInput::-webkit-calendar-picker-indicator {
+  display: none; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+}
 
-/* Responsivo */
+/* TELÉFONO */
+#telefono { color:#000; background:#fff; }
+#telefono:focus { box-shadow:0 0 8px #6c63ff; }
+
+/* RESPONSIVO */
 @media(max-width:480px){
   .container { padding:30px 20px; border-radius:15px; }
   input, select, button { padding:12px; font-size:14px; }
@@ -72,18 +98,19 @@ option.unavailable { color:red; font-weight:bold; }
 </head>
 <body>
 
+<!-- SPLASH -->
 <div id="splash">
+  <div class="splash-logo">LA ZONA DEL BARBERO</div>
   <div class="loader"></div>
-  LA ZONA DEL BARBERO
 </div>
 
-<div class="container" style="display:none;" id="mainForm">
+<!-- FORMULARIO -->
+<div class="container" id="mainForm">
 <h2>Agendar Cita</h2>
 <form id="citaForm">
 <input type="text" id="nombre" placeholder="Nombre" required>
 <input type="text" id="apellido" placeholder="Apellido" required>
 <input type="tel" id="telefono" placeholder="Número telefónico" required pattern="[0-9]{10,15}">
-
 <select id="barbero" required>
   <option value="">Selecciona Barbero</option>
   <option value="Dylan">Dylan</option>
@@ -91,25 +118,25 @@ option.unavailable { color:red; font-weight:bold; }
   <option value="Alejandro">Alejandro</option>
   <option value="Leonardo">Leonardo</option>
 </select>
-
 <input type="date" id="fecha" class="fechaInput" required>
-
 <select id="hora" required></select>
 <button type="submit">Agendar Cita</button>
 </form>
 </div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-// Splash
+// SPLASH
 setTimeout(()=>{
-  document.getElementById('splash').style.display='none';
-  document.getElementById('mainForm').style.display='block';
+  const splash = document.getElementById('splash');
+  splash.classList.add('fade-out');
+  setTimeout(()=>{ document.getElementById('mainForm').style.display='block'; },800);
 },2000);
 
-// Firebase
+// FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeBPyTkymk6I",
   authDomain: "shantybarber-b7b8c.firebaseapp.com",
@@ -127,7 +154,7 @@ const horaSelect = document.getElementById('hora');
 const fechaInput = document.getElementById('fecha');
 const barberoSelect = document.getElementById('barbero');
 
-// Convertir minutos a AM/PM
+// FORMATEAR HORAS AM/PM
 function formatHora(h,m){
   let ampm = h>=12?'PM':'AM';
   let hh = h%12; if(hh===0) hh=12;
@@ -135,7 +162,7 @@ function formatHora(h,m){
   return `${hh}:${mm} ${ampm}`;
 }
 
-// Generar horas
+// GENERAR HORAS
 function generarHoras(){
   horaSelect.innerHTML='';
   let start=10*60, end=21*60;
@@ -149,7 +176,7 @@ function generarHoras(){
   }
 }
 
-// Actualizar horas ocupadas por barbero
+// ACTUALIZAR HORAS OCUPADAS
 function actualizarHoras(){
   const fecha = fechaInput.value;
   const barbero = barberoSelect.value;
@@ -171,7 +198,7 @@ function actualizarHoras(){
 fechaInput.addEventListener('change', actualizarHoras);
 barberoSelect.addEventListener('change', actualizarHoras);
 
-// Enviar formulario
+// ENVIAR FORMULARIO
 document.getElementById('citaForm').addEventListener('submit', function(e){
   e.preventDefault();
   const nombre=document.getElementById('nombre').value;
