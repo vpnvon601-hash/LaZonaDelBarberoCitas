@@ -30,6 +30,8 @@ body { background: linear-gradient(135deg, var(--darker-bg), #222); display:flex
 .splash-logo {
   font-size:2.4em; font-weight:700; letter-spacing:2px;
   text-transform: uppercase; color:#fff;
+  /* CORRECCIÓN: CENTRAR TEXTO */
+  text-align: center; 
   /* NEON EFFECT REPLICANDO LA IMAGEN */
   text-shadow: var(--neon-glow);
   animation: neonPulse 1.5s infinite alternate;
@@ -221,8 +223,9 @@ setTimeout(()=>{
 },2000);
 
 // FIREBASE
+// IMPORTANTE: Asegúrate de que esta configuración coincida con tu proyecto de Firebase.
 const firebaseConfig = {
-  apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I", // REEMPLAZAR con tu API Key real si es diferente
+  apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I", 
   authDomain: "shantybarber-b7b8c.firebaseapp.com",
   databaseURL: "https://shantybarber-b7b8c-default-rtdb.firebaseio.com",
   projectId: "shantybarber-b7b8c",
@@ -251,10 +254,14 @@ function formatHora(h,m){
 // GENERAR HORAS
 function generarHoras(citasOcupadas={}){
   horaOptionsDiv.innerHTML = '';
-  let start=10*60, end=21*60; // De 10:00 AM a 9:00 PM
+  
+  // INICIO: 10:00 AM (600 minutos)
+  let start = 10 * 60; 
+  // FIN: 9:40 PM (1300 minutos). La última cita que comienza a las 9:00 PM termina a las 9:40 PM.
+  let end = 21 * 60 + 40; 
   let horaSeleccionada = horaSeleccionadaInput.value;
 
-  while(start<end){
+  while(start < end){
     let h=Math.floor(start/60), m=start%60;
     let hora = formatHora(h,m);
     let isUnavailable = citasOcupadas[hora.replace(/ /g, '_')];
@@ -278,7 +285,7 @@ function generarHoras(citasOcupadas={}){
     }
 
     horaOptionsDiv.appendChild(optionDiv);
-    start+=20; // Intervalo de 20 minutos
+    start+=40; // Incremento de 40 minutos por cita
   }
 }
 
@@ -287,7 +294,6 @@ function actualizarHoras(){
   const fecha = fechaInput.value;
   const barbero = barberoSelect.value;
   
-  // Limpiar la hora seleccionada si cambian la fecha o el barbero
   horaSeleccionadaInput.value = '';
 
   if(!fecha || !barbero) {
@@ -295,7 +301,7 @@ function actualizarHoras(){
       return;
   }
   
-  // *** CONSULTA ESPECÍFICA DE LA AGENDA DEL BARBERO SELECCIONADO ***
+  // Consulta específica de la agenda del barbero seleccionado
   const ref = db.ref('citas/'+fecha+'/'+barbero); 
   ref.once('value', snapshot=>{
     const citas = snapshot.val()||{};
@@ -308,11 +314,52 @@ barberoSelect.addEventListener('change', actualizarHoras);
 // DETECTAR ENFOQUE Y VALOR PARA EL ESTILO DE LA IMAGEN
 inputs.forEach(inp=>{
   inp.addEventListener('change', ()=>{ 
-    // Los campos de fecha y select tienen estilos especiales
+    // ...
   });
   inp.addEventListener('input', ()=>{
-    // Para inputs de texto/teléfono
     if(inp.value) inp.classList.add('filled'); 
+    else inp.classList.remove('filled');
+  });
+});
+
+// ENVIAR FORMULARIO
+document.getElementById('citaForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const nombre=document.getElementById('nombre').value;
+  const apellido=document.getElementById('apellido').value;
+  const telefono=document.getElementById('telefono').value;
+  const fecha=document.getElementById('fecha').value;
+  const hora=horaSeleccionadaInput.value;
+  const barbero=document.getElementById('barbero').value;
+
+  if(!hora) return alert('Selecciona una hora disponible de la lista.');
+  
+  const selectedOption = document.querySelector('.time-option.selected');
+  if (selectedOption && selectedOption.classList.contains('unavailable')) {
+      return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
+  }
+
+  // Guardar en Firebase, bajo el nodo específico del barbero
+  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
+
+  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
+  const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
+  window.open(waUrl,'_blank');
+  
+  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
+  document.getElementById('citaForm').reset();
+  horaSeleccionadaInput.value = '';
+  generarHoras({}); // Resetear la lista de horas
+  inputs.forEach(i=>i.classList.remove('filled'));
+});
+
+// Inicialización
+generarHoras({});
+fechaInput.min = new Date().toISOString().split('T')[0]; // Evitar seleccionar fechas pasadas
+</script>
+</body>
+</html>
+t.add('filled'); 
     else inp.classList.remove('filled');
   });
 });
