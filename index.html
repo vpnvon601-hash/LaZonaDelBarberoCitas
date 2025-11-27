@@ -1,545 +1,390 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LA ZONA DEL BARBERO - Agendamiento</title>
-    <!-- Carga de Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tipografía: Inter es clara y moderna, se ajusta al estilo minimalista -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Estilos Monocromáticos y Modernos */
-        :root {
-            --color-primary: #000000;
-            --color-secondary: #1f1f1f;
-            --color-text-light: #ffffff;
-            --color-text-dark: #333333;
-            --color-accent: #333333;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f7f7; /* Gris muy claro */
-        }
-        .barber-card {
-            background-color: var(--color-text-light);
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        /* Estilo para los botones principales y selectores */
-        .btn-primary, .input-style, .select-style {
-            transition: all 0.2s;
-            border-color: var(--color-accent);
-            color: var(--color-text-dark);
-        }
-        .btn-primary {
-            background-color: var(--color-primary);
-            color: var(--color-text-light);
-            font-weight: 600;
-        }
-        .btn-primary:hover:not(:disabled) {
-            background-color: var(--color-secondary);
-        }
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LA ZONA DEL BARBERO — Agendamiento</title>
+  <style>
+    /* Monocromo: negro, blanco y grises */
+    :root{--bg:#fff;--card:#f7f7f7;--muted:#8f8f8f;--line:#e6e6e6;--text:#0b0b0b;--accent:#000}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,system-ui,Arial,Helvetica,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+    .container{max-width:1100px;margin:26px auto;padding:20px}
+    header{display:flex;align-items:center;gap:16px;justify-content:space-between}
+    .brand{font-weight:800;font-size:20px;letter-spacing:1px}
+    .subtitle{font-size:13px;color:var(--muted)}
+
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-top:18px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.04)}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input[type=text], input[type=email], input[type=tel], select, input[type=date]{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
+
+    button.primary{background:var(--accent);color:#fff;border:none;padding:12px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid var(--line);padding:10px 12px;border-radius:8px;cursor:pointer}
+
+    .field{margin-bottom:14px}
+    h3{margin:0 0 10px 0}
+    .info{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .small{font-size:13px;color:var(--muted)}
+
+    .available-list{max-height:260px;overflow:auto;border:1px dashed var(--line);padding:8px;border-radius:8px;background:#fff}
+    .slot{padding:9px;border-radius:8px;margin-bottom:6px;background:transparent;cursor:pointer;border:1px solid transparent}
+    .slot:hover{background:#efefef;border-color:#e0e0e0}
+    .slot.selected{background:#000;color:#fff}
+
+    footer{margin-top:18px;font-size:13px;color:var(--muted)}
+
+    .loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .note{font-size:13px;color:var(--muted);margin-top:8px}
+
+    /* Admin view */
+    .admin-toggle{font-size:13px}
+    .appt-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
+    .appt-actions button{margin-left:6px}
+
+    .toast{position:fixed;right:20px;bottom:20px;background:#000;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.15)}
+  </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 sm:p-8">
-    
-    <div id="app-container" class="barber-card w-full max-w-4xl p-6 sm:p-10 rounded-xl">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2 tracking-tight">LA ZONA DEL BARBERO</h1>
-            <p class="text-lg text-gray-500 font-light">Agenda tu Próxima Cita de Estilo</p>
-            <p id="user-id-display" class="text-xs text-gray-400 mt-2">ID de Usuario: Cargando...</p>
-        </header>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="brand">LA ZONA DEL BARBERO</div>
+        <div class="subtitle">Agendamiento — Minimal • Responsive • Seguro</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="small">Modo Admin</div>
+        <label class="admin-toggle"><input type="checkbox" id="adminToggle"> Mostrar panel</label>
+      </div>
+    </header>
 
-        <!-- Formulario de Agendamiento -->
-        <form id="appointment-form">
-            
-            <!-- SECCIÓN 1: Información Personal -->
-            <section class="mb-8 border-b pb-6 border-gray-200">
-                <h2 class="text-2xl font-semibold mb-5 text-gray-700">1. Tu Información</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                        <input type="text" id="name" required class="input-style w-full p-3 border rounded-lg focus:ring-1 focus:ring-black">
-                    </div>
-                    <div>
-                        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                        <input type="text" id="lastName" required class="input-style w-full p-3 border rounded-lg focus:ring-1 focus:ring-black">
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
-                        <input type="tel" id="phone" required class="input-style w-full p-3 border rounded-lg focus:ring-1 focus:ring-black" placeholder="Ej: 3001234567">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-                        <input type="email" id="email" required class="input-style w-full p-3 border rounded-lg focus:ring-1 focus:ring-black">
-                    </div>
-                </div>
-            </section>
+    <div class="grid">
+      <div class="card" id="formCard">
+        <h3>Reservar cita</h3>
+        <p class="info">Complete los datos. El sistema valida solapamientos, bloquea envíos dobles y verifica disponibilidad en tiempo real.</p>
 
-            <!-- SECCIÓN 2: Selección de Servicio y Barbero -->
-            <section class="mb-8 border-b pb-6 border-gray-200">
-                <h2 class="text-2xl font-semibold mb-5 text-gray-700">2. Servicio y Barbero</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div>
-                        <label for="barber" class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Barbero</label>
-                        <select id="barber" required class="select-style w-full p-3 border rounded-lg appearance-none bg-white focus:ring-1 focus:ring-black">
-                            <option value="" disabled selected>Elige un profesional</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="service" class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Servicio</label>
-                        <select id="service" required class="select-style w-full p-3 border rounded-lg appearance-none bg-white focus:ring-1 focus:ring-black">
-                            <option value="" disabled selected>Elige un servicio</option>
-                        </select>
-                        <p id="service-info" class="text-xs mt-2 text-gray-500 italic"></p>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- SECCIÓN 3: Fecha y Hora -->
-            <section class="mb-10">
-                <h2 class="text-2xl font-semibold mb-5 text-gray-700">3. Programar Cita</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div>
-                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Programar Fecha</label>
-                        <input type="date" id="date" required class="input-style w-full p-3 border rounded-lg focus:ring-1 focus:ring-black">
-                    </div>
-                    <div>
-                        <label for="time" class="block text-sm font-medium text-gray-700 mb-1">Programar Hora</label>
-                        <select id="time" required disabled class="select-style w-full p-3 border rounded-lg appearance-none bg-gray-100 focus:ring-1 focus:ring-black">
-                            <option value="" disabled selected>Selecciona Barbero, Servicio y Fecha primero</option>
-                        </select>
-                        <div id="loading-message" class="mt-2 text-sm text-gray-500 hidden">Cargando disponibilidad...</div>
-                        <div id="no-slots-message" class="mt-2 text-sm text-red-500 hidden">No hay horas disponibles para la combinación seleccionada.</div>
-                    </div>
-                </div>
-            </section>
+        <div class="field"><label>Nombre *</label><input id="nombre" type="text" placeholder="Nombre" required></div>
+        <div class="field"><label>Apellido *</label><input id="apellido" type="text" placeholder="Apellido" required></div>
+        <div class="field"><label>Teléfono *</label><input id="telefono" type="tel" placeholder="+57 3xx xxx xxxx" required></div>
+        <div class="field"><label>Correo electrónico</label><input id="email" type="email" placeholder="ejemplo@correo.com"></div>
 
-            <!-- Notificación de Estado -->
-            <div id="message-box" class="hidden p-4 rounded-lg text-sm mb-6" role="alert"></div>
+        <div class="field"><label>Barbero *</label>
+          <select id="barbero">
+            <option value="Dylan">Dylan</option>
+          </select>
+        </div>
 
-            <!-- Botón de Agendamiento -->
-            <button type="submit" id="submit-btn" class="btn-primary w-full p-4 rounded-lg text-lg hover:bg-gray-700 transition duration-300">
-                Confirmar Cita y Enviar WhatsApp
-            </button>
-        </form>
+        <div class="field"><label>Servicio *</label>
+          <select id="servicio">
+            <option value="Corte" data-price="18000" data-duration="30">Corte — $18.000 — 30 min</option>
+            <option value="Corte + Ceja" data-price="22000" data-duration="40">Corte + Ceja — $22.000 — 40 min</option>
+            <option value="Corte + Ceja + Barba" data-price="25000" data-duration="60">Corte + Ceja + Barba — $25.000 — 60 min</option>
+            <option value="Corte + Limpieza Facial" data-price="65000" data-duration="130">Corte + Limpieza Facial — $65.000 — 130 min</option>
+          </select>
+        </div>
+
+        <div class="field"><label>Programar Fecha *</label><input id="fecha" type="date"></div>
+
+        <div class="field">
+          <label>Programar Hora (horas disponibles) *</label>
+          <div id="horaContainer">
+            <select id="horaSelect"><option value="">Primero elige fecha, barbero y servicio</option></select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+          <button class="primary" id="btnGuardar">Confirmar y enviar WhatsApp</button>
+          <button class="ghost" id="btnLimpiar">Limpiar</button>
+          <div id="status" style="margin-left:8px"></div>
+        </div>
+
+        <div class="note">Horario operativo: 10:00 — 20:40. La aplicación verifica disponibilidad en tiempo real y evita solapamientos.</div>
+
+        <div id="confirmation" style="display:none;margin-top:12px" class="card">
+          <h4>Confirmación</h4>
+          <div id="confText" class="small"></div>
+          <div style="height:8px"></div>
+          <button class="primary" id="confSend">Enviar a WhatsApp</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Resumen / Disponibilidad</h3>
+        <div class="small">Servicio: <strong id="summaryService">-</strong></div>
+        <div class="small">Duración: <strong id="summaryDuration">-</strong> min</div>
+        <div class="small">Barbero: <strong id="summaryBarbero">Dylan</strong></div>
+        <div style="height:12px"></div>
+        <h4 style="margin:10px 0 6px 0">Horas disponibles</h4>
+        <div class="available-list" id="availableList">Elija fecha, servicio y barbero para ver horas disponibles.</div>
+
+        <div style="height:12px"></div>
+        <h4 style="margin:10px 0 6px 0">Últimas citas (fecha seleccionada)</h4>
+        <div id="lastList" class="small" style="max-height:220px;overflow:auto"></div>
+      </div>
     </div>
 
-    <!-- Scripts de Firebase y Lógica de la Aplicación -->
-    <script type="module">
-        // Importaciones de Firebase (URLs CDN v11.6.1)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <div id="adminPanel" style="display:none;margin-top:18px" class="card">
+      <h3>Panel de Administración</h3>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <select id="adminBarbero"><option value="all">Todos los barberos</option><option value="Dylan">Dylan</option></select>
+        <input type="date" id="adminFecha">
+        <button class="ghost" id="adminFilter">Filtrar</button>
+      </div>
+      <div id="adminList" style="max-height:360px;overflow:auto"></div>
+    </div>
 
-        // Establecer el nivel de registro de Firestore a Debug
-        setLogLevel('debug');
+    <footer class="card" style="margin-top:18px">
+      <div><strong>Persistencia:</strong> Google Cloud Firestore (colección: <code>appointments</code>).</div>
+      <div style="margin-top:6px" class="small">Autenticación preferible para admin. Revisa reglas de seguridad en tu consola Firebase.</div>
+    </footer>
+  </div>
 
-        // --- CONFIGURACIÓN Y CONSTANTES ---
+  <div id="toast" class="toast" style="display:none"></div>
 
-        // Configuración de Firebase (proporcionada en las especificaciones)
-        const firebaseConfig = {
-            apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I",
-            authDomain: "shantybarber-b7b8c.firebaseapp.com",
-            databaseURL: "https://shantybarber-b7b8c-default-rtdb.firebaseio.com",
-            projectId: "shantybarber-b7b8c",
-            storageBucket: "shantybarber-b7b8c.firebasestorage.app",
-            messagingSenderId: "568694643758",
-            appId: "1:56869643758:web:c1bbf8a68f6e9e3d4ad3bf",
-            measurementId: "G-JXMJM9Q3X1"
-        };
-        
-        // Variables globales del entorno
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        const FIREBASE_COLLECTION_PATH = `/artifacts/${appId}/public/data/appointments`;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+    import { getAuth, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp,
+      onSnapshot, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const BARBERS = [
-            { id: 'Dylan', name: 'Dylan' },
-            { id: 'Ricardo', name: 'Ricardo' },
-            { id: 'Juan', name: 'Juan' },
-        ];
+    const firebaseConfig = {
+      apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
+      authDomain: "lazonadelbarbero-b4e75.firebaseapp.com",
+      projectId: "lazonadelbarbero-b4e75",
+      storageBucket: "lazonadelbarbero-b4e75.firebasestorage.app",
+      messagingSenderId: "251180096928",
+      appId: "1:251180096928:web:86d0ab83c7e444af79d8c5",
+      measurementId: "G-G4YL7M4Z00"
+    };
 
-        // Mapeo de servicios a duración (en minutos) y precio
-        const SERVICES = {
-            'Corte': { price: '18.000', duration: 30 },
-            'Corte + Ceja': { price: '22.000', duration: 40 },
-            'Corte + Ceja + Barba': { price: '25.000', duration: 60 },
-            // La duración de 2.3 horas (130 minutos) se maneja correctamente aquí.
-            'Corte + Limpieza Facial': { price: '65.000', duration: 130 }, 
-        };
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-        // Horario Operacional (en minutos desde la medianoche)
-        const OPENING_TIME = 600; // 10:00 AM (10 * 60)
-        const CLOSING_TIME = 1240; // 8:40 PM (20 * 60 + 40)
-        const TIME_STEP = 10; // Intervalo de inicio para citas (cada 10 minutos)
+    // Constantes de horario
+    const OPEN_MIN = 10*60; // 10:00
+    const CLOSE_MIN = 20*60 + 40; // 20:40
+    const STEP_MIN = 10; // granularity
 
-        // Estado de la aplicación
-        let db, auth;
-        let currentUserId = null;
-        let isAuthReady = false;
+    // Elementos
+    const servicioEl = document.getElementById('servicio');
+    const barberoEl = document.getElementById('barbero');
+    const fechaEl = document.getElementById('fecha');
+    const horaSelect = document.getElementById('horaSelect');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const availableList = document.getElementById('availableList');
+    const lastList = document.getElementById('lastList');
+    const summaryService = document.getElementById('summaryService');
+    const summaryDuration = document.getElementById('summaryDuration');
+    const summaryBarbero = document.getElementById('summaryBarbero');
+    const confirmation = document.getElementById('confirmation');
+    const confText = document.getElementById('confText');
+    const confSend = document.getElementById('confSend');
 
-        // --- MANEJO DE UI Y ESTADO ---
+    // Admin
+    const adminToggle = document.getElementById('adminToggle');
+    const adminPanel = document.getElementById('adminPanel');
+    const adminBarbero = document.getElementById('adminBarbero');
+    const adminFecha = document.getElementById('adminFecha');
+    const adminFilter = document.getElementById('adminFilter');
+    const adminList = document.getElementById('adminList');
 
-        const elements = {
-            barberSelect: document.getElementById('barber'),
-            serviceSelect: document.getElementById('service'),
-            dateInput: document.getElementById('date'),
-            timeSelect: document.getElementById('time'),
-            form: document.getElementById('appointment-form'),
-            submitBtn: document.getElementById('submit-btn'),
-            serviceInfo: document.getElementById('service-info'),
-            messageBox: document.getElementById('message-box'),
-            userIdDisplay: document.getElementById('user-id-display'),
-            loadingMessage: document.getElementById('loading-message'),
-            noSlotsMessage: document.getElementById('no-slots-message'),
-        };
+    const toastEl = document.getElementById('toast');
 
-        function displayMessage(message, type = 'info') {
-            elements.messageBox.textContent = message;
-            elements.messageBox.className = 'p-4 rounded-lg text-sm mb-6';
-            elements.messageBox.classList.remove('hidden');
+    function showToast(txt, ms=3000){ toastEl.textContent=txt; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none', ms); }
 
-            if (type === 'success') {
-                elements.messageBox.classList.add('bg-green-100', 'text-green-700');
-            } else if (type === 'error') {
-                elements.messageBox.classList.add('bg-red-100', 'text-red-700');
-            } else {
-                elements.messageBox.classList.add('bg-gray-100', 'text-gray-700');
-            }
+    function parseDurationFromSelect(){ return parseInt(servicioEl.selectedOptions[0].dataset.duration,10); }
+    function minutesToTime(m){ const h=String(Math.floor(m/60)).padStart(2,'0'); const mm=String(m%60).padStart(2,'0'); return `${h}:${mm}`; }
+
+    // Validaciones
+    function validatePhone(p){ return /^\+?57\s?3\d{2}\s?\d{3}\s?\d{3}$/.test(p) || /^3\d{9}$/.test(p); }
+
+    async function fetchAppointmentsFor(barbero, dateISO){
+      const ref = collection(db,'appointments');
+      const q = query(ref, where('barbero','==',barbero), where('date','==',dateISO), orderBy('startMinutes'));
+      const snap = await getDocs(q);
+      const arr = [];
+      snap.forEach(d=>{ const data=d.data(); data._id=d.id; arr.push(data); });
+      return arr;
+    }
+
+    function buildOccupiedIntervals(appts){
+      // normalize and merge overlapping
+      const iv = appts.map(a=>({start:a.startMinutes, end:a.startMinutes + a.durationMinutes})).sort((x,y)=>x.start-y.start);
+      const merged = [];
+      for(const x of iv){
+        if(!merged.length || x.start>merged[merged.length-1].end){ merged.push({...x}); }
+        else{ merged[merged.length-1].end = Math.max(merged[merged.length-1].end, x.end); }
+      }
+      return merged;
+    }
+
+    function isConflict(candidateStart, candidateEnd, occupied){
+      for(const iv of occupied){ if(candidateStart < iv.end && candidateEnd > iv.start) return true; } return false;
+    }
+
+    function computeAvailableSlots(durationMinutes, occupied){
+      const slots=[];
+      for(let s=OPEN_MIN; s+durationMinutes <= CLOSE_MIN; s+=STEP_MIN){
+        const e = s+durationMinutes;
+        if(!isConflict(s,e,occupied)) slots.push(s);
+      }
+      return slots;
+    }
+
+    // Refresh availability (real-time snapshot for admin usage also exists)
+    async function refreshAvailability(){
+      const dateVal = fechaEl.value; const barbero = barberoEl.value; const duration = parseDurationFromSelect();
+      summaryService.textContent = servicioEl.value; summaryDuration.textContent = duration; summaryBarbero.textContent = barbero;
+      if(!dateVal){ availableList.innerHTML='Seleccione una fecha.'; return; }
+
+      availableList.innerHTML = '<div class=\"small\">Cargando disponibilidad... <span class=\"loader\"></span></div>';
+      try{
+        const appts = await fetchAppointmentsFor(barbero, dateVal);
+        const occupied = buildOccupiedIntervals(appts);
+        const slots = computeAvailableSlots(duration, occupied);
+
+        horaSelect.innerHTML = '';
+        if(slots.length===0){ availableList.innerHTML = '<div class=\"small\">No hay horas disponibles para la fecha y servicio seleccionados.</div>'; horaSelect.innerHTML = '<option value=\"\">No disponible</option>'; }
+        else{
+          availableList.innerHTML='';
+          slots.forEach(s=>{
+            const time = minutesToTime(s);
+            const opt = document.createElement('option'); opt.value = s; opt.textContent = time + ` (${duration} min)`; horaSelect.appendChild(opt);
+
+            const div = document.createElement('div'); div.className='slot'; div.textContent = time; div.onclick = ()=>{ document.querySelectorAll('.slot').forEach(x=>x.classList.remove('selected')); div.classList.add('selected'); horaSelect.value = s; };
+            availableList.appendChild(div);
+          });
         }
 
-        function populateSelectors() {
-            // Rellenar Barbero
-            BARBERS.forEach(barber => {
-                const option = document.createElement('option');
-                option.value = barber.id;
-                option.textContent = barber.name;
-                elements.barberSelect.appendChild(option);
-            });
+        lastList.innerHTML='';
+        if(appts.length===0) lastList.innerHTML='<div class=\"small\">Sin citas para esa fecha.</div>';
+        else appts.slice(0,10).forEach(a=>{ const node=document.createElement('div'); node.innerHTML=`<strong>${minutesToTime(a.startMinutes)}</strong> — ${a.servicio} — ${a.nombre} — ${a.telefono}`; lastList.appendChild(node); });
 
-            // Rellenar Servicios
-            Object.keys(SERVICES).forEach(serviceName => {
-                const service = SERVICES[serviceName];
-                const option = document.createElement('option');
-                option.value = serviceName;
-                option.textContent = `${serviceName} ($${service.price} COP, ${service.duration} min)`;
-                elements.serviceSelect.appendChild(option);
-            });
+      }catch(err){ console.error(err); availableList.innerHTML='<div class=\"small\">Error cargando disponibilidad.</div>'; }
+    }
 
-            // Establecer la fecha mínima a hoy
-            const today = new Date().toISOString().split('T')[0];
-            elements.dateInput.setAttribute('min', today);
-        }
-        
-        // --- UTILIDADES DE TIEMPO ---
+    servicioEl.addEventListener('change', refreshAvailability);
+    barberoEl.addEventListener('change', refreshAvailability);
+    fechaEl.addEventListener('change', refreshAvailability);
 
-        /** Convierte una hora HH:MM a minutos desde la medianoche. */
-        function timeToMinutes(time) {
-            const [h, m] = time.split(':').map(Number);
-            return h * 60 + m;
-        }
+    // Anti-doble envío
+    let submitting = false;
 
-        /** Convierte minutos desde la medianoche a una hora HH:MM. */
-        function minutesToTime(minutes) {
-            const h = Math.floor(minutes / 60);
-            const m = minutes % 60;
-            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        }
-        
-        /** Normaliza una fecha ISO (YYYY-MM-DD) para consistencia. */
-        function normalizeDate(dateString) {
-             // Esta función es vital para evitar problemas de zona horaria al comparar fechas
-             const date = new Date(dateString);
-             // Retorna la fecha en formato YYYY-MM-DD
-             return date.toISOString().split('T')[0];
-        }
+    btnLimpiar.addEventListener('click', ()=>{
+      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value=''; horaSelect.innerHTML='<option value=\"\">Primero elige fecha, barbero y servicio</option>'; availableList.innerHTML='Elija fecha, servicio y barbero para ver horas disponibles.'; lastList.innerHTML=''; confirmation.style.display='none';
+    });
 
+    btnGuardar.addEventListener('click', async ()=>{
+      if(submitting) return showToast('Enviando... espera');
+      const nombre = document.getElementById('nombre').value.trim();
+      const apellido = document.getElementById('apellido').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const barbero = barberoEl.value; const servicio = servicioEl.value; const duration = parseDurationFromSelect();
+      const dateVal = fechaEl.value; const startMinutes = parseInt(horaSelect.value,10);
 
-        // --- LÓGICA DE DISPONIBILIDAD DE HORARIO (CORE) ---
+      if(!nombre||!apellido||!telefono||!dateVal||!startMinutes){ alert('Por favor complete todos los campos obligatorios y seleccione una hora válida.'); return; }
+      if(!validatePhone(telefono)){
+        if(!confirm('El número parece no tener formato +57... ¿Deseas continuar?')) return;
+      }
 
-        /** * Calcula y filtra las horas disponibles para un servicio de duración variable.
-         * La lógica asegura que:
-         * 1. El servicio quepa dentro del horario 10:00 AM (600 min) - 8:40 PM (1240 min).
-         * 2. No se solape con citas ya agendadas.
-         */
-        function getAvailableTimes(barberId, selectedDate, duration, existingAppointments) {
-            const availableTimes = [];
-            
-            // 1. Filtrar citas relevantes para el barbero y la fecha
-            const filteredAppointments = existingAppointments.filter(appt => 
-                appt.barberId === barberId && normalizeDate(appt.date) === normalizeDate(selectedDate)
-            );
-            
-            // Convertir citas a bloques de tiempo ocupado [startMin, endMin)
-            const occupiedSlots = filteredAppointments.map(appt => {
-                const startMin = timeToMinutes(appt.time);
-                // La duración guardada de la cita es crucial
-                const endMin = startMin + appt.duration; 
-                return { start: startMin, end: endMin };
-            });
+      // No permitir reservar en el pasado
+      const now = new Date();
+      const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10));
+      const apptDate = new Date(y,m-1,d);
+      if(apptDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())){ alert('No puedes reservar en una fecha pasada.'); return; }
 
-            // 2. Iterar sobre posibles horas de inicio cada 10 minutos
-            for (let startMin = OPENING_TIME; startMin < CLOSING_TIME; startMin += TIME_STEP) {
-                const endMin = startMin + duration;
+      submitting = true; btnGuardar.disabled=true; document.getElementById('status').innerHTML='<span class=\"loader\"></span>';
 
-                // 3. **VERIFICACIÓN CRÍTICA**: Verificar si el servicio cabe antes de la hora de cierre (8:40 PM).
-                // Un servicio DEBE finalizar a más tardar a CLOSING_TIME (1240 min).
-                if (endMin > CLOSING_TIME) {
-                    // Si el servicio termina después de las 8:40 PM, se detiene la búsqueda 
-                    // ya que las horas siguientes tampoco servirán.
-                    break;
-                }
-
-                let isSlotAvailable = true;
-
-                // 4. Verificar solapamiento con citas existentes (BLOQUEO DINÁMICO)
-                for (const slot of occupiedSlots) {
-                    // Criterio de Solapamiento para intervalos [a, b) y [c, d): a < d && c < b
-                    // Nuevo Servicio: [startMin, endMin)
-                    // Cita Existente: [slot.start, slot.end)
-                    if (startMin < slot.end && endMin > slot.start) {
-                        isSlotAvailable = false;
-                        break;
-                    }
-                }
-
-                if (isSlotAvailable) {
-                    availableTimes.push(minutesToTime(startMin));
-                }
-            }
-
-            return availableTimes;
+      try{
+        // Verificar disponibilidad actual (doble-check)
+        const appts = await fetchAppointmentsFor(barbero, dateVal);
+        const occupied = buildOccupiedIntervals(appts);
+        if(isConflict(startMinutes, startMinutes + duration, occupied)){
+          alert('La hora seleccionada ya no está disponible. Actualice disponibilidad y elija otra hora.'); submitting=false; btnGuardar.disabled=false; document.getElementById('status').innerHTML=''; return;
         }
 
+        const fullName = `${nombre} ${apellido}`;
+        const docData = { nombre: fullName, telefono, email: email||'', barbero, servicio, durationMinutes: duration, startMinutes, date: dateVal, createdAt: serverTimestamp() };
 
-        // --- MANEJO DE DATOS Y EVENTOS ---
+        await addDoc(collection(db,'appointments'), docData);
 
-        async function fetchAppointmentsAndRefreshTimes() {
-            if (!isAuthReady || !db) return;
+        // Preparar confirmación elegante
+        const horaStr = minutesToTime(startMinutes);
+        confText.innerHTML = `Cliente: <strong>${fullName}</strong><br>Servicio: <strong>${servicio}</strong><br>Barbero: <strong>${barbero}</strong><br>Fecha: <strong>${dateVal}</strong><br>Hora: <strong>${horaStr}</strong>`;
+        confirmation.style.display='block';
 
-            // Mostrar estado de carga
-            elements.timeSelect.innerHTML = '<option value="" disabled selected>Cargando disponibilidad...</option>';
-            elements.timeSelect.disabled = true;
-            elements.loadingMessage.classList.remove('hidden');
-            elements.noSlotsMessage.classList.add('hidden');
+        // Guardado OK
+        showToast('Cita guardada correctamente');
 
-            const barberId = elements.barberSelect.value;
-            const serviceName = elements.serviceSelect.value;
-            const date = elements.dateInput.value;
+      }catch(err){ console.error(err); alert('Error guardando la cita.'); }
+      finally{ submitting=false; btnGuardar.disabled=false; document.getElementById('status').innerHTML=''; }
+    });
 
-            if (!barberId || !serviceName || !date) {
-                elements.timeSelect.innerHTML = '<option value="" disabled selected>Selecciona Barbero, Servicio y Fecha primero</option>';
-                elements.timeSelect.disabled = true;
-                elements.loadingMessage.classList.add('hidden');
-                return;
-            }
+    // Envío a WhatsApp tras confirmación
+    confSend.addEventListener('click', ()=>{
+      const txt = confText.textContent || confText.innerText;
+      // build message (encoded)
+      const msgPlain = txt.replace(/\n/g,' ').replace(/\s+/g,' ');
+      const destinationNumber = '573233489369';
+      const encoded = encodeURIComponent(msgPlain);
+      window.open(`https://api.whatsapp.com/send?phone=${destinationNumber}&text=${encoded}`,'_blank');
+      showToast('Abriendo WhatsApp...');
+    });
 
-            const duration = SERVICES[serviceName].duration;
-            
-            try {
-                // Obtener citas solo para la fecha seleccionada para optimizar la consulta
-                const collectionRef = collection(db, FIREBASE_COLLECTION_PATH);
-                const q = query(collectionRef, where('date', '==', normalizeDate(date)));
-                const snapshot = await getDocs(q);
-                
-                // Mapear los documentos a un formato de cita simple
-                const appointmentsOnDate = snapshot.docs.map(doc => doc.data());
+    // Admin panel logic (real-time list con onSnapshot)
+    adminToggle.addEventListener('change', ()=>{ adminPanel.style.display = adminToggle.checked ? 'block' : 'none'; if(adminToggle.checked) attachAdminSnapshot(); });
 
-                const availableTimes = getAvailableTimes(barberId, date, duration, appointmentsOnDate);
-                
-                // Rellenar el selector de hora
-                elements.timeSelect.innerHTML = '';
-                if (availableTimes.length > 0) {
-                    elements.timeSelect.disabled = false;
-                    elements.timeSelect.innerHTML = '<option value="" disabled selected>Elige una hora</option>';
-                    availableTimes.forEach(time => {
-                        const option = document.createElement('option');
-                        option.value = time;
-                        option.textContent = time;
-                        elements.timeSelect.appendChild(option);
-                    });
-                } else {
-                    elements.timeSelect.innerHTML = '<option value="" disabled selected>Sin horarios disponibles</option>';
-                    elements.timeSelect.disabled = true;
-                    elements.noSlotsMessage.classList.remove('hidden');
-                }
+    let adminUnsub = null;
+    function attachAdminSnapshot(){
+      if(adminUnsub) adminUnsub();
+      const ref = collection(db,'appointments');
+      const q = query(ref, orderBy('date'), orderBy('startMinutes'));
+      adminUnsub = onSnapshot(q, snap=>{
+        adminList.innerHTML='';
+        const docs = [];
+        snap.forEach(d=>{ const data=d.data(); data._id=d.id; docs.push(data); });
+        // filter UI controls
+        const byBarbero = adminBarbero.value; const byDate = adminFecha.value;
+        const filtered = docs.filter(a=> (byBarbero==='all'||a.barbero===byBarbero) && (!byDate||a.date===byDate));
+        if(filtered.length===0) adminList.innerHTML='<div class=\"small\">Sin resultados.</div>';
+        filtered.forEach(a=>{
+          const row = document.createElement('div'); row.className='appt-row';
+          row.innerHTML = `<div><strong>${a.date} ${minutesToTime(a.startMinutes)}</strong><div class="small">${a.servicio} — ${a.nombre} — ${a.telefono}</div></div>`;
+          const actions = document.createElement('div'); actions.className='appt-actions';
+          const btnDel = document.createElement('button'); btnDel.className='ghost'; btnDel.textContent='Eliminar'; btnDel.onclick = async ()=>{ if(confirm('Eliminar cita?')){ await deleteDoc(doc(db,'appointments',a._id)); showToast('Cita eliminada'); } };
+          const btnEdit = document.createElement('button'); btnEdit.className='ghost'; btnEdit.textContent='Marcar realizada'; btnEdit.onclick = async ()=>{ await updateDoc(doc(db,'appointments',a._id), { done: true }); showToast('Marcado'); };
+          actions.appendChild(btnEdit); actions.appendChild(btnDel);
+          row.appendChild(actions);
+          adminList.appendChild(row);
+        });
+      }, err=>{ console.error('snapshot err',err); adminList.innerHTML='<div class="small">Error cargando panel admin.</div>'; });
+    }
 
-            } catch (error) {
-                console.error("Error al calcular o cargar citas:", error);
-                displayMessage("Error al cargar la disponibilidad. Intenta de nuevo.", 'error');
-            } finally {
-                elements.loadingMessage.classList.add('hidden');
-            }
-        }
-        
-        /** Maneja los cambios en los selectores para actualizar la disponibilidad. */
-        function handleSelectionChange() {
-            const serviceName = elements.serviceSelect.value;
-            
-            // Mostrar información del servicio
-            if (serviceName) {
-                const service = SERVICES[serviceName];
-                elements.serviceInfo.textContent = `Duración: ${service.duration} minutos | Precio: $${service.price} COP.`;
-            } else {
-                elements.serviceInfo.textContent = '';
-            }
-            
-            // Forzar recálculo si todos los campos están llenos
-            const barberId = elements.barberSelect.value;
-            const date = elements.dateInput.value;
-            if (barberId && serviceName && date) {
-                fetchAppointmentsAndRefreshTimes();
-            } else {
-                 elements.timeSelect.innerHTML = '<option value="" disabled selected>Selecciona Barbero, Servicio y Fecha primero</option>';
-                 elements.timeSelect.disabled = true;
-                 elements.loadingMessage.classList.add('hidden');
-                 elements.noSlotsMessage.classList.add('hidden');
-            }
-        }
+    adminFilter.addEventListener('click', ()=>{ attachAdminSnapshot(); });
 
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            
-            elements.submitBtn.disabled = true;
-            elements.submitBtn.textContent = 'Agendando...';
-            elements.messageBox.classList.add('hidden');
+    // Inicializar fecha mínima y admin fecha
+    (function init(){ const today=new Date(); const yyyy=today.getFullYear(); const mm=String(today.getMonth()+1).padStart(2,'0'); const dd=String(today.getDate()).padStart(2,'0'); fechaEl.min = `${yyyy}-${mm}-${dd}`; adminFecha.min = `${yyyy}-${mm}-${dd}`; })();
 
-            const serviceName = elements.serviceSelect.value;
-            const duration = SERVICES[serviceName].duration;
-            const price = SERVICES[serviceName].price;
+    // Autenticación automática si hay token (opcional)
+    (async function tryAutoAuth(){
+      try{ if(window.__initial_auth_token){ await signInWithCustomToken(auth, window.__initial_auth_token); console.log('Autenticado vía token inicial'); }
+      }catch(e){ console.warn('Error en autenticación automática', e); }
 
-            const appointmentData = {
-                // Información Personal
-                name: document.getElementById('name').value.trim(),
-                lastName: document.getElementById('lastName').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                email: document.getElementById('email').value.trim(),
-
-                // Información de la Cita
-                barberId: elements.barberSelect.value,
-                serviceName: serviceName,
-                date: normalizeDate(elements.dateInput.value), // Fecha normalizada (YYYY-MM-DD)
-                time: elements.timeSelect.value, // Hora de inicio (HH:MM)
-                duration: duration,
-                price: price,
-                
-                // Metadata
-                bookedAt: new Date().toISOString(),
-                userId: currentUserId,
-            };
-
-            try {
-                // 1. Re-verificar la disponibilidad justo antes de guardar (protección contra concurrencia)
-                const collectionRef = collection(db, FIREBASE_COLLECTION_PATH);
-                const q = query(collectionRef, where('date', '==', appointmentData.date));
-                const snapshot = await getDocs(q);
-                const appointmentsOnDate = snapshot.docs.map(doc => doc.data());
-                
-                const availableTimes = getAvailableTimes(appointmentData.barberId, appointmentData.date, appointmentData.duration, appointmentsOnDate);
-                
-                if (!availableTimes.includes(appointmentData.time)) {
-                     displayMessage("El horario seleccionado ya no está disponible. Por favor, selecciona otra hora.", 'error');
-                     elements.submitBtn.disabled = false;
-                     elements.submitBtn.textContent = 'Confirmar Cita y Enviar WhatsApp';
-                     // Recalcular y actualizar la lista de horas
-                     fetchAppointmentsAndRefreshTimes(); 
-                     return;
-                }
-                
-                // 2. Guardar en Firestore
-                await addDoc(collection(db, FIREBASE_COLLECTION_PATH), appointmentData);
-                
-                displayMessage("Cita agendada con éxito. Redirigiendo a WhatsApp para confirmación...", 'success');
-                
-                // 3. Generar y Redirigir a WhatsApp
-                const fullDateTime = `${appointmentData.date} a las ${appointmentData.time}`;
-                const waMessage = 
-                    `¡Hola! Acabo de agendar una cita en LA ZONA DEL BARBERO.\n\n` +
-                    `Detalles de la Cita:\n` +
-                    `👤 Cliente: ${appointmentData.name} ${appointmentData.lastName}\n` +
-                    `💇 Barbero: ${appointmentData.barberId}\n` +
-                    `✂️ Servicio: ${appointmentData.serviceName} ($${appointmentData.price} COP)\n` +
-                    `📅 Fecha y Hora: ${fullDateTime}\n` +
-                    `📞 Contacto: ${appointmentData.phone}\n\n` +
-                    `¡Gracias!`;
-                    
-                const waApiUrl = `https://api.whatsapp.com/send?phone=573233489369&text=${encodeURIComponent(waMessage)}`;
-                
-                // Abrir en nueva pestaña
-                window.open(waApiUrl, '_blank');
-                
-                // 4. Limpiar formulario
-                elements.form.reset();
-                handleSelectionChange(); // Restablecer selectores de hora
-                
-            } catch (error) {
-                console.error("Error al guardar la cita:", error);
-                displayMessage(`Error al agendar la cita: ${error.message}. Por favor, inténtalo de nuevo.`, 'error');
-            } finally {
-                elements.submitBtn.disabled = false;
-                elements.submitBtn.textContent = 'Confirmar Cita y Enviar WhatsApp';
-            }
-        }
-
-
-        // --- INICIALIZACIÓN DE FIREBASE ---
-        
-        async function initFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // 1. Autenticación
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // 2. Listener de estado de autenticación
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        elements.userIdDisplay.textContent = `ID de Usuario: ${currentUserId}`;
-                        isAuthReady = true;
-                        // Forzar el recálculo inicial una vez que la autenticación esté lista
-                        handleSelectionChange();
-                    } else {
-                        currentUserId = crypto.randomUUID(); 
-                        elements.userIdDisplay.textContent = `ID de Usuario (Anónimo): ${currentUserId.substring(0, 8)}...`;
-                        isAuthReady = true;
-                        handleSelectionChange();
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error al inicializar Firebase o autenticar:", error);
-                displayMessage("Error fatal de conexión con la base de datos.", 'error');
-            }
-        }
-        
-        // --- INICIO DE LA APLICACIÓN ---
-        window.onload = () => {
-            populateSelectors();
-            initFirebase();
-            
-            // Añadir Listeners de Eventos
-            elements.barberSelect.addEventListener('change', handleSelectionChange);
-            elements.serviceSelect.addEventListener('change', handleSelectionChange);
-            elements.dateInput.addEventListener('change', handleSelectionChange);
-            elements.form.addEventListener('submit', handleFormSubmit);
-
-            // La llamada a handleSelectionChange() inicial se hace dentro de onAuthStateChanged
-        };
-
-    </script>
+      onAuthStateChanged(auth, user=>{
+        if(user){ console.log('Usuario autenticado', user.uid); } else { console.log('No hay usuario autenticado'); }
+      });
+    })();
+  </script>
 </body>
 </html>
-
