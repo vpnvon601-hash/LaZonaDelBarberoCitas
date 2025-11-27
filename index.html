@@ -70,7 +70,7 @@ h2 { text-align:center; margin-bottom:25px; font-weight:600; color:#fff; }
   margin-bottom: 5px;
   font-size: 14px;
   font-weight: 600;
-  /* CAMBIO 2: TÍTULOS EN MORADO */
+  /* TÍTULOS EN MORADO */
   color: var(--main-purple); 
 }
 /* Estilo para los campos de entrada/selección */
@@ -91,13 +91,13 @@ input:focus, .custom-select.active, select:focus {
 /* PLACEHOLDER */
 input::placeholder { color:#aaa; }
 
-/* FECHA (Replicado el estilo de la imagen) */
+/* FECHA (Corregido para bordes redondeados y borde púrpura) */
 .fechaInput {
-  color: var(--main-purple); /* El color del valor seleccionado en la imagen es púrpura */
+  color: var(--main-purple); 
   background: var(--input-bg);
   -webkit-appearance: none;
   appearance: none;
-  /* CAMBIO 1: AÑADIR BORDE PÚRPURA */
+  border-radius: 10px; 
   border: 2px solid var(--main-purple); 
 }
 
@@ -112,7 +112,7 @@ input::placeholder { color:#aaa; }
   margin-bottom: 5px;
 }
 .time-options {
-  max-height: 180px; /* Para mostrar 3 o 4 opciones a la vez */
+  max-height: 180px; 
   overflow-y: auto;
   background: var(--input-bg);
   border-radius: 10px;
@@ -137,7 +137,7 @@ input::placeholder { color:#aaa; }
   box-shadow: 0 0 10px var(--main-purple);
 }
 .time-option.unavailable {
-  color: #ff6347; /* Rojo para no disponibles */
+  color: #ff6347; 
   cursor: not-allowed;
   background-color: #383838;
 }
@@ -282,7 +282,7 @@ function generarHoras(citasOcupadas={}){
   }
 }
 
-// ACTUALIZAR HORAS OCUPADAS
+// ACTUALIZAR HORAS OCUPADAS (Lógica de Agenda Separada)
 function actualizarHoras(){
   const fecha = fechaInput.value;
   const barbero = barberoSelect.value;
@@ -295,7 +295,8 @@ function actualizarHoras(){
       return;
   }
   
-  const ref = db.ref('citas/'+fecha+'/'+barbero);
+  // *** CONSULTA ESPECÍFICA DE LA AGENDA DEL BARBERO SELECCIONADO ***
+  const ref = db.ref('citas/'+fecha+'/'+barbero); 
   ref.once('value', snapshot=>{
     const citas = snapshot.val()||{};
     generarHoras(citas);
@@ -334,7 +335,7 @@ document.getElementById('citaForm').addEventListener('submit', function(e){
       return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
   }
 
-  // Guardar en Firebase, reemplazando el espacio por guion bajo para una clave válida
+  // Guardar en Firebase, bajo el nodo específico del barbero
   db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
 
   const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
