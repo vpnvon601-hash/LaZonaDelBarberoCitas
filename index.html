@@ -30,8 +30,7 @@ body { background: linear-gradient(135deg, var(--darker-bg), #222); display:flex
 .splash-logo {
   font-size:2.4em; font-weight:700; letter-spacing:2px;
   text-transform: uppercase; color:#fff;
-  /* CORRECCIÓN: CENTRAR TEXTO */
-  text-align: center; 
+  text-align: center; /* Asegura el centrado del texto del logo */
   /* NEON EFFECT REPLICANDO LA IMAGEN */
   text-shadow: var(--neon-glow);
   animation: neonPulse 1.5s infinite alternate;
@@ -60,6 +59,8 @@ body { background: linear-gradient(135deg, var(--darker-bg), #222); display:flex
   box-shadow:0 15px 30px rgba(0,0,0,0.5);
   display:none;
   animation: fadeIn 0.8s ease;
+  /* CORRECCIÓN: CENTRAR TODO EL CONTENIDO DEL FORMULARIO */
+  text-align: center; 
 }
 @keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
 
@@ -72,22 +73,23 @@ h2 { text-align:center; margin-bottom:25px; font-weight:600; color:#fff; }
   margin-bottom: 5px;
   font-size: 14px;
   font-weight: 600;
-  /* TÍTULOS EN MORADO */
   color: var(--main-purple); 
+  text-align: left; /* Alineamos las etiquetas a la izquierda para mejor lectura */
 }
 /* Estilo para los campos de entrada/selección */
 input[type="text"], input[type="tel"], .custom-select, .custom-input, select, button {
   width:100%; padding:14px; margin:5px 0 12px 0; border-radius:10px; border:none; font-size:16px; transition:0.3s;
+  text-align: left; /* Aseguramos que el texto del input vaya a la izquierda */
 }
 /* Estilo de los campos */
 input[type="text"], input[type="tel"], .custom-select, .custom-input, select { 
   background: var(--input-bg); 
-  color: #fff; /* Texto del usuario en blanco */
+  color: #fff; 
 }
 /* Foco y selección de horas */
 input:focus, .custom-select.active, select:focus { 
   outline:none; 
-  box-shadow:0 0 10px var(--main-purple); /* Brillo púrpura al enfocar */
+  box-shadow:0 0 10px var(--main-purple); 
 }
 
 /* PLACEHOLDER */
@@ -101,11 +103,13 @@ input::placeholder { color:#aaa; }
   appearance: none;
   border-radius: 10px; 
   border: 2px solid var(--main-purple); 
+  text-align: left; /* Aseguramos la alineación a la izquierda para el selector de fecha */
 }
 
 /* Selección de Hora (Menú customizado para simular la selección de la imagen) */
 .time-selector {
   margin-top: 15px;
+  text-align: left; /* Aseguramos que el contenedor de horas esté alineado a la izquierda */
 }
 .time-selector label {
   font-size: 14px;
@@ -128,7 +132,8 @@ input::placeholder { color:#aaa; }
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.2s, box-shadow 0.2s;
-  color: #fff; /* Texto de la hora en blanco */
+  color: #fff; 
+  text-align: left;
 }
 .time-option:hover {
   background-color: #444;
@@ -315,6 +320,51 @@ barberoSelect.addEventListener('change', actualizarHoras);
 inputs.forEach(inp=>{
   inp.addEventListener('change', ()=>{ 
     // ...
+  });
+  inp.addEventListener('input', ()=>{
+    if(inp.value) inp.classList.add('filled'); 
+    else inp.classList.remove('filled');
+  });
+});
+
+// ENVIAR FORMULARIO
+document.getElementById('citaForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const nombre=document.getElementById('nombre').value;
+  const apellido=document.getElementById('apellido').value;
+  const telefono=document.getElementById('telefono').value;
+  const fecha=document.getElementById('fecha').value;
+  const hora=horaSeleccionadaInput.value;
+  const barbero=document.getElementById('barbero').value;
+
+  if(!hora) return alert('Selecciona una hora disponible de la lista.');
+  
+  const selectedOption = document.querySelector('.time-option.selected');
+  if (selectedOption && selectedOption.classList.contains('unavailable')) {
+      return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
+  }
+
+  // Guardar en Firebase, bajo el nodo específico del barbero
+  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
+
+  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
+  const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
+  window.open(waUrl,'_blank');
+  
+  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
+  document.getElementById('citaForm').reset();
+  horaSeleccionadaInput.value = '';
+  generarHoras({}); // Resetear la lista de horas
+  inputs.forEach(i=>i.classList.remove('filled'));
+});
+
+// Inicialización
+generarHoras({});
+fechaInput.min = new Date().toISOString().split('T')[0]; // Evitar seleccionar fechas pasadas
+</script>
+</body>
+</html>
+/ ...
   });
   inp.addEventListener('input', ()=>{
     if(inp.value) inp.classList.add('filled'); 
