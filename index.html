@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LA ZONA DEL BARBERO</title>
-
 <style>
   /* General */
   body {
@@ -27,7 +26,8 @@
     align-items: center;
     justify-content: center;
     z-index: 50;
-    animation: fadeOut 2s ease forwards 3s;
+    animation: fadeOut 2s ease forwards 2s;
+    gap: 10px;
   }
 
   @keyframes fadeOut {
@@ -38,12 +38,15 @@
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
   .animate-bounce { animation: bounce 1s infinite; }
-  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+  .splash h1 { font-size: 36px; }
+  .splash p { font-size: 16px; color: #aaa; }
 
   /* Formulario */
   .form-container {
     max-width: 500px;
-    margin: 150px auto 50px auto;
+    margin: 120px auto 50px auto;
     background-color: #222;
     padding: 30px;
     border-radius: 15px;
@@ -68,12 +71,15 @@
   }
 
   input::placeholder { color: #aaa; }
-  select option:disabled { background-color: #333; color: #888; }
 
   input:focus, select:focus {
     outline: 2px solid #FFD700;
     outline-offset: 2px;
   }
+
+  select option { background-color: #111; color: #fff; }
+
+  select option:disabled { background-color: #333; color: #888; }
 
   button {
     margin-top: 20px;
@@ -83,15 +89,17 @@
     cursor: pointer;
     font-weight: bold;
   }
+
   button:hover { background-color: #FFC107; }
+
 </style>
 </head>
 <body>
 
 <!-- Splash -->
 <div class="splash">
-  <h1 class="gold animate-pulse" style="font-size: 50px;">LA ZONA DEL BARBERO</h1>
-  <p class="animate-bounce" style="color: #aaa; font-size: 18px;">Cargando...</p>
+  <h1 class="gold animate-pulse">LA ZONA DEL BARBERO</h1>
+  <p class="animate-bounce">Cargando...</p>
 </div>
 
 <!-- Formulario -->
@@ -124,6 +132,7 @@
   <button id="enviar">Agendar Cita ✂️💈</button>
 </div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -144,9 +153,9 @@
 
   // Generar horas cada 40 min de 10:00 a 21:40
   const horasSelect = document.getElementById('hora');
-  function generarHoras(){
+  function generarHoras() {
     let start = 10*60;
-    const end = 21*60 + 40;
+    const end = 21*60+40;
     while(start <= end){
       let h = Math.floor(start/60);
       let m = start%60;
@@ -161,6 +170,7 @@
   }
   generarHoras();
 
+  // Actualizar disponibilidad por barbero y fecha
   const barberoSelect = document.getElementById('barbero');
   document.getElementById('fecha').addEventListener('change', actualizarHoras);
   barberoSelect.addEventListener('change', actualizarHoras);
@@ -169,6 +179,7 @@
     const barbero = barberoSelect.value;
     const fecha = document.getElementById('fecha').value;
     if(!barbero || !fecha) return;
+
     const snapshot = await db.ref(`citas/${barbero}/${fecha}`).once('value');
     const citas = snapshot.val() || {};
     Array.from(horasSelect.options).forEach(opt => {
@@ -176,6 +187,7 @@
     });
   }
 
+  // Enviar cita
   document.getElementById('enviar').addEventListener('click', async ()=>{
     const barbero = barberoSelect.value;
     const nombre = document.getElementById('nombre').value;
@@ -186,12 +198,16 @@
       alert("Por favor completa todos los campos");
       return;
     }
+
     await db.ref(`citas/${barbero}/${fecha}/${hora}`).set({nombre, apellido});
+
     const mensaje = `💈 *LA ZONA DEL BARBERO* 💈%0ABarbero: ${barbero}%0ANombre: ${nombre} ${apellido}%0AFecha: ${fecha}%0AHora: ${hora}%0A✨ Cita agendada con éxito!`;
-    window.open(`https://api.whatsapp.com/send?phone=573233489369&text=${mensaje}`,'_blank');
+    window.open(`https://api.whatsapp.com/send?phone=573233489369&text=${mensaje}`, '_blank');
+
     alert("Cita agendada con éxito!");
     actualizarHoras();
   });
 </script>
+
 </body>
 </html>
