@@ -3,384 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agendar Cita - LA ZONA DEL BARBERO</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<title>LA ZONA DEL BARBERO</title>
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
-/* VARIABLES DE COLOR */
-:root {
-  --main-purple: #6c63ff;
-  --dark-bg: #1c1c1c;
-  --darker-bg: #111;
-  --input-bg: #333;
-  --neon-glow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--main-purple), 0 0 30px var(--main-purple), 0 0 40px var(--main-purple);
-}
-
-* { box-sizing: border-box; margin:0; padding:0; }
-body, html { height:100%; font-family:'Montserrat',sans-serif; }
-body { 
-    background: linear-gradient(135deg, var(--darker-bg), #222); 
-    display:flex; 
-    justify-content:center; /* Centra horizontalmente el formulario */
-    align-items:center; /* Centra verticalmente el formulario */
-}
-
-/* SPLASH/TITLE SCREEN */
-#splash {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background: linear-gradient(135deg, var(--darker-bg), var(--dark-bg));
-  display:flex; justify-content:center; align-items:center;
-  flex-direction: column; color:#fff; font-family:'Montserrat',sans-serif;
-  z-index:9999; overflow:hidden;
-}
-.splash-logo {
-  font-size:2.4em; font-weight:700; letter-spacing:2px;
-  text-transform: uppercase; color:#fff;
-  text-align: center; 
-  text-shadow: var(--neon-glow);
-  animation: neonPulse 1.5s infinite alternate;
-}
-.loader {
-  border: 6px solid #333;
-  border-top: 6px solid var(--main-purple);
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin-top: 25px;
-}
-@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
-@keyframes neonPulse {
-  0% {text-shadow:0 0 5px #fff,0 0 20px var(--main-purple);}
-  100% {text-shadow:var(--neon-glow);}
-}
-.fade-out { animation: fadeOut 0.8s forwards; }
-@keyframes fadeOut { from {opacity:1;} to {opacity:0; visibility:hidden;} }
-
-/* FORMULARIO */
-.container {
-  background-color: var(--dark-bg); 
-  color:#fff;
-  padding:40px 30px; 
-  border-radius:20px; 
-  width:90%; 
-  max-width:400px;
-  box-shadow:0 15px 30px rgba(0,0,0,0.5);
-  display:none;
-  animation: fadeIn 0.8s ease;
-  /* El contenedor principal NO debe tener text-align: center para evitar que los inputs se centren. */
-}
-@keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
-
-h2 { 
-    text-align:center; /* Título principal SÍ centrado */
-    margin-bottom:25px; 
-    font-weight:600; 
-    color:#fff; 
-}
-
-/* Grupos de formulario (para espaciado) */
-.form-group {
-    margin-bottom: 20px; 
-    /* Esta es la clave: los grupos deben estar alineados a la izquierda (comportamiento por defecto de un div) */
-    text-align: left; 
-}
-
-/* Etiquetas para los campos de formulario */
-.form-group label {
-  display: block;
-  margin-bottom: 5px; 
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--main-purple); 
-}
-
-/* Estilo para los campos de entrada/selección (general) */
-input[type="text"], 
-input[type="tel"], 
-.custom-select, 
-select, 
-button {
-  width:100%; 
-  padding:14px; 
-  border-radius:10px; 
-  border:none; 
-  font-size:16px; 
-  transition:0.3s;
-  background: var(--input-bg); 
-  color: #fff; 
-  text-align: left; /* Asegura que el texto que escribes inicia a la izquierda */
-}
-
-/* Foco y selección de horas (mantener el brillo púrpura) */
-input:focus, 
-.custom-select.active, 
-select:focus { 
-  outline:none; 
-  box-shadow:0 0 10px var(--main-purple); 
-}
-
-/* PLACEHOLDER */
-input::placeholder { color:#aaa; }
-
-/* FECHA (Borde púrpura solo para el de fecha) */
-.fechaInput {
-  color: var(--main-purple); 
-  background: var(--input-bg);
-  -webkit-appearance: none;
-  appearance: none;
-  border-radius: 10px; 
-  border: 2px solid var(--main-purple); 
-  text-align: left; 
-}
-
-/* Selección de Hora (El contenedor de horas también debe ser text-align: left por herencia de .form-group) */
-.time-selector {
-  margin-top: 15px; 
-}
-
-.time-options {
-  max-height: 180px; 
-  overflow-y: auto;
-  background: var(--input-bg);
-  border-radius: 10px;
-  padding: 5px;
-  margin-bottom: 15px;
-}
-.time-option {
-  padding: 14px;
-  margin: 2px 0;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  color: #fff; 
-  text-align: left;
-}
-.time-option.selected {
-  background-color: var(--main-purple); 
-  color: #fff;
-  box-shadow: 0 0 10px var(--main-purple);
-}
-.time-option.unavailable {
-  color: #ff6347; 
-  cursor: not-allowed;
-  background-color: #383838;
-}
-.time-option.unavailable:hover {
-  background-color: #383838;
-}
-
-/* BOTÓN */
-button { 
-  background: var(--main-purple); 
-  color:#fff; 
-  font-weight:600; 
-  cursor:pointer; 
-  margin-top: 20px; 
-}
-button:hover { background:#5751d0; transform:scale(1.02); }
-
-/* RESPONSIVO */
-@media(max-width:480px){
-  .container { padding:30px 20px; border-radius:15px; }
-  input, select, button, .time-option { padding:12px; font-size:14px; }
-}
+  body { background: #111; color: #fff; font-family: 'Arial', sans-serif; }
+  .gold { color: #FFD700; }
+  .hidden { display: none; }
+  .splash { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: linear-gradient(135deg, #000, #222); display: flex; 
+    align-items: center; justify-content: center; flex-direction: column;
+    z-index: 50; animation: fadeOut 2s ease forwards 3s;
+  }
+  @keyframes fadeOut { 100% { opacity: 0; visibility: hidden; } }
 </style>
 </head>
 <body>
 
-<div id="splash">
-  <div class="splash-logo">LA ZONA DEL BARBERO</div>
-  <div class="loader"></div>
+<!-- Splash -->
+<div class="splash">
+  <h1 class="text-4xl gold font-bold animate-pulse">LA ZONA DEL BARBERO</h1>
+  <p class="text-gray-400 mt-4 animate-bounce">Cargando...</p>
 </div>
 
-<div class="container" id="mainForm">
-  <h2>Agendar Cita</h2>
-  <form id="citaForm">
+<!-- Formulario -->
+<div class="max-w-lg mx-auto mt-20 p-6 bg-gray-900 rounded-2xl shadow-lg">
+  <h2 class="text-2xl gold font-bold mb-4 text-center">Agendar Cita</h2>
+  
+  <label class="block mb-2">Selecciona Barbero</label>
+  <select id="barbero" class="w-full p-2 mb-4 rounded bg-gray-800 text-white">
+    <option value="">-- Escoge un barbero --</option>
+    <option value="Dylan">Dylan</option>
+    <option value="Santiago">Santiago</option>
+    <option value="Alejandro">Alejandro</option>
+    <option value="Leonardo">Leonardo</option>
+  </select>
 
-    <div class="form-group">
-      <label for="nombre">Nombre</label>
-      <input type="text" id="nombre" placeholder="Nombre" required>
-    </div>
+  <input type="text" id="nombre" placeholder="Nombre" class="w-full p-2 mb-4 rounded bg-gray-800 text-white">
+  <input type="text" id="apellido" placeholder="Apellido" class="w-full p-2 mb-4 rounded bg-gray-800 text-white">
+  
+  <label class="block mb-2">Fecha de la cita</label>
+  <input type="date" id="fecha" class="w-full p-2 mb-4 rounded bg-gray-800 text-white">
 
-    <div class="form-group">
-      <label for="apellido">Apellido</label>
-      <input type="text" id="apellido" placeholder="Apellido" required>
-    </div>
+  <label class="block mb-2">Hora de la cita</label>
+  <select id="hora" class="w-full p-2 mb-4 rounded bg-gray-800 text-white">
+    <option value="">-- Escoge una hora --</option>
+  </select>
 
-    <div class="form-group">
-      <label for="telefono">Número telefónico</label>
-      <input type="tel" id="telefono" placeholder="Número telefónico" required pattern="[0-9]{7,15}">
-    </div>
-    
-    <div class="form-group">
-        <label for="barbero">Selecciona Barbero</label>
-        <select id="barbero" required class="custom-select">
-            <option value="">Selecciona Barbero</option>
-            <option value="Dylan">Dylan</option>
-            <option value="Santiago">Santiago</option>
-            <option value="Alejandro">Alejandro</option>
-            <option value="Leonardo">Leonardo</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-      <label for="fecha">Selecciona fecha</label>
-      <input type="date" id="fecha" class="fechaInput" required>
-    </div>
-
-    <div class="time-selector form-group">
-      <label>Selecciona hora</label>
-      <div id="horaOptions" class="time-options">
-        </div>
-      <input type="hidden" id="horaSeleccionada" required>
-    </div>
-
-    <button type="submit">Agendar Cita</button>
-  </form>
+  <button id="enviar" class="w-full p-3 bg-gold hover:bg-yellow-500 text-black font-bold rounded">Agendar Cita ✂️💈</button>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-// SPLASH
-setTimeout(()=>{
-  const splash = document.getElementById('splash');
-  splash.classList.add('fade-out');
-  setTimeout(()=>{ document.getElementById('mainForm').style.display='block'; },800);
-},2000);
+  // Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I",
+    authDomain: "shantybarber-b7b8c.firebaseapp.com",
+    databaseURL: "https://shantybarber-b7b8c-default-rtdb.firebaseio.com",
+    projectId: "shantybarber-b7b8c",
+    storageBucket: "shantybarber-b7b8c.firebasestorage.app",
+    messagingSenderId: "568694643758",
+    appId: "1:568694643758:web:c1bbf8a68f6e9e3d4ad3bf",
+    measurementId: "G-JXMJM9Q3X1"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-// FIREBASE
-// IMPORTANTE: Asegúrate de que esta configuración coincida con tu proyecto de Firebase.
-const firebaseConfig = {
-  apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I", 
-  authDomain: "shantybarber-b7b8c.firebaseapp.com",
-  databaseURL: "https://shantybarber-b7b8c-default-rtdb.firebaseio.com",
-  projectId: "shantybarber-b7b8c",
-  storageBucket: "shantybarber-b7b8c.firebasestorage.app",
-  messagingSenderId: "568694643758",
-  appId: "1:568694643758:web:c1bbf8a68f6e9e3d4ad3bf",
-  measurementId: "G-JXMJM9Q3X1"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  // Generar horas de 40 min
+  const horasSelect = document.getElementById('hora');
+  function generarHoras() {
+    let start = 10*60; // 10:00am en minutos
+    const end = 21*60 + 40; // 9:40pm
+    while(start <= end){
+      const h = Math.floor(start/60);
+      const m = start%60;
+      const ampm = h < 12 ? 'AM' : 'PM';
+      const horaStr = `${h>12?h-12:h}:${m.toString().padStart(2,'0')} ${ampm}`;
+      const option = document.createElement('option');
+      option.value = horaStr;
+      option.textContent = horaStr;
+      horasSelect.appendChild(option);
+      start += 40;
+    }
+  }
+  generarHoras();
 
-const horaOptionsDiv = document.getElementById('horaOptions');
-const horaSeleccionadaInput = document.getElementById('horaSeleccionada');
-const fechaInput = document.getElementById('fecha');
-const barberoSelect = document.getElementById('barbero');
-const inputs = [document.getElementById('nombre'),document.getElementById('apellido'),document.getElementById('telefono'),fechaInput,barberoSelect];
-
-// FORMATEAR HORAS AM/PM
-function formatHora(h,m){
-  let ampm = h>=12?'PM':'AM';
-  let hh = h%12; if(hh===0) hh=12;
-  let mm = m.toString().padStart(2,'0');
-  return `${hh}:${mm} ${ampm}`;
-}
-
-// GENERAR HORAS
-function generarHoras(citasOcupadas={}){
-  horaOptionsDiv.innerHTML = '';
-  
-  // Horario de 40 minutos: 10:00 AM hasta 9:00 PM (última cita)
-  let start = 10 * 60; 
-  let end = 21 * 60 + 40; // 9:40 PM
-  let horaSeleccionada = horaSeleccionadaInput.value;
-
-  while(start < end){
-    let h=Math.floor(start/60), m=start%60;
-    let hora = formatHora(h,m);
-    let isUnavailable = citasOcupadas[hora.replace(/ /g, '_')];
-
-    let optionDiv=document.createElement('div');
-    optionDiv.className = 'time-option';
-    if (isUnavailable) optionDiv.classList.add('unavailable');
-    if (hora === horaSeleccionada && !isUnavailable) optionDiv.classList.add('selected');
-
-    optionDiv.textContent = hora;
-    if (isUnavailable) optionDiv.textContent += ' - Ocupado';
+  // Actualizar horas no disponibles
+  const barberoSelect = document.getElementById('barbero');
+  async function actualizarHoras() {
+    const barbero = barberoSelect.value;
+    const fecha = document.getElementById('fecha').value;
+    if(!barbero || !fecha) return;
     
-    if(!isUnavailable){
-      optionDiv.addEventListener('click', function(){
-        document.querySelectorAll('.time-option').forEach(opt => opt.classList.remove('selected'));
-        this.classList.add('selected');
-        horaSeleccionadaInput.value = hora; 
-      });
+    const snapshot = await db.ref(`citas/${barbero}/${fecha}`).once('value');
+    const citas = snapshot.val() || {};
+    
+    Array.from(horasSelect.options).forEach(opt => {
+      if(opt.value !== "") opt.disabled = citas[opt.value] ? true : false;
+    });
+  }
+
+  barberoSelect.addEventListener('change', actualizarHoras);
+  document.getElementById('fecha').addEventListener('change', actualizarHoras);
+
+  // Enviar cita
+  document.getElementById('enviar').addEventListener('click', async () => {
+    const barbero = barberoSelect.value;
+    const nombre = document.getElementById('nombre').value;
+    const apellido = document.getElementById('apellido').value;
+    const fecha = document.getElementById('fecha').value;
+    const hora = horasSelect.value;
+    if(!barbero || !nombre || !apellido || !fecha || !hora){
+      alert("Por favor completa todos los campos");
+      return;
     }
 
-    horaOptionsDiv.appendChild(optionDiv);
-    start+=40; // Incremento de 40 minutos por cita
-  }
-}
+    // Guardar en Firebase
+    await db.ref(`citas/${barbero}/${fecha}/${hora}`).set({nombre, apellido});
 
-// ACTUALIZAR HORAS OCUPADAS (Lógica de Agenda Separada)
-function actualizarHoras(){
-  const fecha = fechaInput.value;
-  const barbero = barberoSelect.value;
-  
-  horaSeleccionadaInput.value = '';
+    // Enviar a WhatsApp
+    const mensaje = `💈 *LA ZONA DEL BARBERO* 💈%0ABarbero: ${barbero}%0ANombre: ${nombre} ${apellido}%0AFecha: ${fecha}%0AHora: ${hora}%0A✨ Cita agendada con éxito!`;
+    window.open(`https://api.whatsapp.com/send?phone=573233489369&text=${mensaje}`, '_blank');
 
-  if(!fecha || !barbero) {
-      generarHoras({});
-      return;
-  }
-  
-  const ref = db.ref('citas/'+fecha+'/'+barbero); 
-  ref.once('value', snapshot=>{
-    const citas = snapshot.val()||{};
-    generarHoras(citas);
+    alert("Cita agendada con éxito!");
+    actualizarHoras();
   });
-}
-fechaInput.addEventListener('change', actualizarHoras);
-barberoSelect.addEventListener('change', actualizarHoras);
-
-// DETECTAR ENFOQUE Y VALOR PARA EL ESTILO DE LA IMAGEN
-inputs.forEach(inp=>{
-  inp.addEventListener('change', ()=>{ 
-    // ...
-  });
-  inp.addEventListener('input', ()=>{
-    if(inp.value) inp.classList.add('filled'); 
-    else inp.classList.remove('filled');
-  });
-});
-
-// ENVIAR FORMULARIO
-document.getElementById('citaForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const nombre=document.getElementById('nombre').value;
-  const apellido=document.getElementById('apellido').value;
-  const telefono=document.getElementById('telefono').value;
-  const fecha=document.getElementById('fecha').value;
-  const hora=horaSeleccionadaInput.value;
-  const barbero=document.getElementById('barbero').value;
-
-  if(!hora) return alert('Selecciona una hora disponible de la lista.');
-  
-  const selectedOption = document.querySelector('.time-option.selected');
-  if (selectedOption && selectedOption.classList.contains('unavailable')) {
-      return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
-  }
-
-  // Guardar en Firebase
-  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
-
-  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
-  const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
-  window.open(waUrl,'_blank');
-  
-  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
-  document.getElementById('citaForm').reset();
-  horaSeleccionadaInput.value = '';
-  generarHoras({});
-  inputs.forEach(i=>i.classList.remove('filled'));
-});
-
-// Inicialización
-generarHoras({});
-fechaInput.min = new Date().toISOString().split('T')[0];
 </script>
 </body>
 </html>
