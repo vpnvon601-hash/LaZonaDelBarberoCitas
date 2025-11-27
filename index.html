@@ -30,8 +30,7 @@ body { background: linear-gradient(135deg, var(--darker-bg), #222); display:flex
 .splash-logo {
   font-size:2.4em; font-weight:700; letter-spacing:2px;
   text-transform: uppercase; color:#fff;
-  text-align: center; /* Asegura el centrado del texto del logo */
-  /* NEON EFFECT REPLICANDO LA IMAGEN */
+  text-align: center; 
   text-shadow: var(--neon-glow);
   animation: neonPulse 1.5s infinite alternate;
 }
@@ -59,35 +58,53 @@ body { background: linear-gradient(135deg, var(--darker-bg), #222); display:flex
   box-shadow:0 15px 30px rgba(0,0,0,0.5);
   display:none;
   animation: fadeIn 0.8s ease;
-  /* CORRECCIÓN: CENTRAR TODO EL CONTENIDO DEL FORMULARIO */
-  text-align: center; 
+  /* Eliminamos text-align: center para que los elementos fluyan a la izquierda */
+  /* text-align: center; */ 
 }
 @keyframes fadeIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
 
-h2 { text-align:center; margin-bottom:25px; font-weight:600; color:#fff; }
+h2 { 
+    text-align:center; 
+    margin-bottom:25px; 
+    font-weight:600; 
+    color:#fff; 
+}
+
+/* Grupos de formulario (para espaciado) */
+.form-group {
+    margin-bottom: 20px; /* Espacio entre cada grupo de etiqueta y campo */
+}
 
 /* Etiquetas para los campos de formulario */
 .form-group label {
   display: block;
-  margin-top: 15px;
-  margin-bottom: 5px;
+  margin-bottom: 5px; /* Espacio entre etiqueta y campo */
   font-size: 14px;
   font-weight: 600;
   color: var(--main-purple); 
-  text-align: left; /* Alineamos las etiquetas a la izquierda para mejor lectura */
+  text-align: left; /* Asegura la alineación a la izquierda */
 }
-/* Estilo para los campos de entrada/selección */
-input[type="text"], input[type="tel"], .custom-select, .custom-input, select, button {
-  width:100%; padding:14px; margin:5px 0 12px 0; border-radius:10px; border:none; font-size:16px; transition:0.3s;
-  text-align: left; /* Aseguramos que el texto del input vaya a la izquierda */
+/* Estilo para los campos de entrada/selección (general) */
+input[type="text"], 
+input[type="tel"], 
+.custom-select, 
+select, 
+button {
+  width:100%; 
+  padding:14px; 
+  border-radius:10px; 
+  border:none; /* Por defecto, sin borde para los inputs de texto/teléfono */
+  font-size:16px; 
+  transition:0.3s;
+  background: var(--input-bg); /* Fondo oscuro */
+  color: #fff; /* Texto del usuario en blanco */
+  text-align: left; 
 }
-/* Estilo de los campos */
-input[type="text"], input[type="tel"], .custom-select, .custom-input, select { 
-  background: var(--input-bg); 
-  color: #fff; 
-}
-/* Foco y selección de horas */
-input:focus, .custom-select.active, select:focus { 
+
+/* Foco y selección de horas (mantener el brillo púrpura) */
+input:focus, 
+.custom-select.active, 
+select:focus { 
   outline:none; 
   box-shadow:0 0 10px var(--main-purple); 
 }
@@ -95,21 +112,21 @@ input:focus, .custom-select.active, select:focus {
 /* PLACEHOLDER */
 input::placeholder { color:#aaa; }
 
-/* FECHA (Corregido para bordes redondeados y borde púrpura) */
+/* FECHA (Corregido para bordes redondeados y borde púrpura - solo el de fecha) */
 .fechaInput {
   color: var(--main-purple); 
   background: var(--input-bg);
   -webkit-appearance: none;
   appearance: none;
   border-radius: 10px; 
-  border: 2px solid var(--main-purple); 
-  text-align: left; /* Aseguramos la alineación a la izquierda para el selector de fecha */
+  border: 2px solid var(--main-purple); /* Mantener el borde púrpura para la fecha */
+  text-align: left; 
 }
 
-/* Selección de Hora (Menú customizado para simular la selección de la imagen) */
+/* Selección de Hora */
 .time-selector {
-  margin-top: 15px;
-  text-align: left; /* Aseguramos que el contenedor de horas esté alineado a la izquierda */
+  margin-top: 15px; /* Espacio para el selector de hora */
+  text-align: left; 
 }
 .time-selector label {
   font-size: 14px;
@@ -122,333 +139,4 @@ input::placeholder { color:#aaa; }
   overflow-y: auto;
   background: var(--input-bg);
   border-radius: 10px;
-  padding: 5px;
-  margin-bottom: 15px;
-}
-.time-option {
-  padding: 14px;
-  margin: 2px 0;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  color: #fff; 
-  text-align: left;
-}
-.time-option:hover {
-  background-color: #444;
-}
-.time-option.selected {
-  background-color: var(--main-purple);
-  color: #fff;
-  box-shadow: 0 0 10px var(--main-purple);
-}
-.time-option.unavailable {
-  color: #ff6347; 
-  cursor: not-allowed;
-  background-color: #383838;
-}
-.time-option.unavailable:hover {
-  background-color: #383838;
-}
-
-/* BOTÓN */
-button { background: var(--main-purple); color:#fff; font-weight:600; cursor:pointer; }
-button:hover { background:#5751d0; transform:scale(1.02); }
-
-/* RESPONSIVO */
-@media(max-width:480px){
-  .container { padding:30px 20px; border-radius:15px; }
-  input, select, button, .time-option { padding:12px; font-size:14px; }
-}
-</style>
-</head>
-<body>
-
-<div id="splash">
-  <div class="splash-logo">LA ZONA DEL BARBERO</div>
-  <div class="loader"></div>
-</div>
-
-<div class="container" id="mainForm">
-  <h2>Agendar Cita</h2>
-  <form id="citaForm">
-
-    <div class="form-group">
-      <label>Nombre</label>
-      <input type="text" id="nombre" placeholder="Nombre" required>
-    </div>
-
-    <div class="form-group">
-      <label>Apellido</label>
-      <input type="text" id="apellido" placeholder="Apellido" required>
-    </div>
-
-    <div class="form-group">
-      <label>Número telefónico</label>
-      <input type="tel" id="telefono" placeholder="Número telefónico" required pattern="[0-9]{7,15}">
-    </div>
-    
-    <div class="form-group">
-        <label>Selecciona Barbero</label>
-        <select id="barbero" required class="custom-select">
-            <option value="">Selecciona Barbero</option>
-            <option value="Dylan">Dylan</option>
-            <option value="Santiago">Santiago</option>
-            <option value="Alejandro">Alejandro</option>
-            <option value="Leonardo">Leonardo</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-      <label>Selecciona fecha</label>
-      <input type="date" id="fecha" class="fechaInput" required>
-    </div>
-
-    <div class="time-selector">
-      <label>Selecciona hora</label>
-      <div id="horaOptions" class="time-options">
-        </div>
-      <input type="hidden" id="horaSeleccionada" required>
-    </div>
-
-    <button type="submit">Agendar Cita</button>
-  </form>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-<script>
-// SPLASH
-setTimeout(()=>{
-  const splash = document.getElementById('splash');
-  splash.classList.add('fade-out');
-  setTimeout(()=>{ document.getElementById('mainForm').style.display='block'; },800);
-},2000);
-
-// FIREBASE
-// IMPORTANTE: Asegúrate de que esta configuración coincida con tu proyecto de Firebase.
-const firebaseConfig = {
-  apiKey: "AIzaSyD0XwAGFWJEFs6_bpPLQGSVeVPyTkymk6I", 
-  authDomain: "shantybarber-b7b8c.firebaseapp.com",
-  databaseURL: "https://shantybarber-b7b8c-default-rtdb.firebaseio.com",
-  projectId: "shantybarber-b7b8c",
-  storageBucket: "shantybarber-b7b8c.firebasestorage.app",
-  messagingSenderId: "568694643758",
-  appId: "1:568694643758:web:c1bbf8a68f6e9e3d4ad3bf",
-  measurementId: "G-JXMJM9Q3X1"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-const horaOptionsDiv = document.getElementById('horaOptions');
-const horaSeleccionadaInput = document.getElementById('horaSeleccionada');
-const fechaInput = document.getElementById('fecha');
-const barberoSelect = document.getElementById('barbero');
-const inputs = [document.getElementById('nombre'),document.getElementById('apellido'),document.getElementById('telefono'),fechaInput,barberoSelect];
-
-// FORMATEAR HORAS AM/PM
-function formatHora(h,m){
-  let ampm = h>=12?'PM':'AM';
-  let hh = h%12; if(hh===0) hh=12;
-  let mm = m.toString().padStart(2,'0');
-  return `${hh}:${mm} ${ampm}`;
-}
-
-// GENERAR HORAS
-function generarHoras(citasOcupadas={}){
-  horaOptionsDiv.innerHTML = '';
-  
-  // INICIO: 10:00 AM (600 minutos)
-  let start = 10 * 60; 
-  // FIN: 9:40 PM (1300 minutos). La última cita que comienza a las 9:00 PM termina a las 9:40 PM.
-  let end = 21 * 60 + 40; 
-  let horaSeleccionada = horaSeleccionadaInput.value;
-
-  while(start < end){
-    let h=Math.floor(start/60), m=start%60;
-    let hora = formatHora(h,m);
-    let isUnavailable = citasOcupadas[hora.replace(/ /g, '_')];
-
-    let optionDiv=document.createElement('div');
-    optionDiv.className = 'time-option';
-    if (isUnavailable) optionDiv.classList.add('unavailable');
-    if (hora === horaSeleccionada && !isUnavailable) optionDiv.classList.add('selected');
-
-    optionDiv.textContent = hora;
-    if (isUnavailable) optionDiv.textContent += ' - Ocupado';
-    
-    if(!isUnavailable){
-      optionDiv.addEventListener('click', function(){
-        // Quitar 'selected' de las otras opciones
-        document.querySelectorAll('.time-option').forEach(opt => opt.classList.remove('selected'));
-        // Establecer esta como seleccionada
-        this.classList.add('selected');
-        horaSeleccionadaInput.value = hora; // Actualizar el campo oculto
-      });
-    }
-
-    horaOptionsDiv.appendChild(optionDiv);
-    start+=40; // Incremento de 40 minutos por cita
-  }
-}
-
-// ACTUALIZAR HORAS OCUPADAS (Lógica de Agenda Separada)
-function actualizarHoras(){
-  const fecha = fechaInput.value;
-  const barbero = barberoSelect.value;
-  
-  horaSeleccionadaInput.value = '';
-
-  if(!fecha || !barbero) {
-      generarHoras({});
-      return;
-  }
-  
-  // Consulta específica de la agenda del barbero seleccionado
-  const ref = db.ref('citas/'+fecha+'/'+barbero); 
-  ref.once('value', snapshot=>{
-    const citas = snapshot.val()||{};
-    generarHoras(citas);
-  });
-}
-fechaInput.addEventListener('change', actualizarHoras);
-barberoSelect.addEventListener('change', actualizarHoras);
-
-// DETECTAR ENFOQUE Y VALOR PARA EL ESTILO DE LA IMAGEN
-inputs.forEach(inp=>{
-  inp.addEventListener('change', ()=>{ 
-    // ...
-  });
-  inp.addEventListener('input', ()=>{
-    if(inp.value) inp.classList.add('filled'); 
-    else inp.classList.remove('filled');
-  });
-});
-
-// ENVIAR FORMULARIO
-document.getElementById('citaForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const nombre=document.getElementById('nombre').value;
-  const apellido=document.getElementById('apellido').value;
-  const telefono=document.getElementById('telefono').value;
-  const fecha=document.getElementById('fecha').value;
-  const hora=horaSeleccionadaInput.value;
-  const barbero=document.getElementById('barbero').value;
-
-  if(!hora) return alert('Selecciona una hora disponible de la lista.');
-  
-  const selectedOption = document.querySelector('.time-option.selected');
-  if (selectedOption && selectedOption.classList.contains('unavailable')) {
-      return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
-  }
-
-  // Guardar en Firebase, bajo el nodo específico del barbero
-  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
-
-  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
-  const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
-  window.open(waUrl,'_blank');
-  
-  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
-  document.getElementById('citaForm').reset();
-  horaSeleccionadaInput.value = '';
-  generarHoras({}); // Resetear la lista de horas
-  inputs.forEach(i=>i.classList.remove('filled'));
-});
-
-// Inicialización
-generarHoras({});
-fechaInput.min = new Date().toISOString().split('T')[0]; // Evitar seleccionar fechas pasadas
-</script>
-</body>
-</html>
-/ ...
-  });
-  inp.addEventListener('input', ()=>{
-    if(inp.value) inp.classList.add('filled'); 
-    else inp.classList.remove('filled');
-  });
-});
-
-// ENVIAR FORMULARIO
-document.getElementById('citaForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const nombre=document.getElementById('nombre').value;
-  const apellido=document.getElementById('apellido').value;
-  const telefono=document.getElementById('telefono').value;
-  const fecha=document.getElementById('fecha').value;
-  const hora=horaSeleccionadaInput.value;
-  const barbero=document.getElementById('barbero').value;
-
-  if(!hora) return alert('Selecciona una hora disponible de la lista.');
-  
-  const selectedOption = document.querySelector('.time-option.selected');
-  if (selectedOption && selectedOption.classList.contains('unavailable')) {
-      return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
-  }
-
-  // Guardar en Firebase, bajo el nodo específico del barbero
-  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
-
-  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
-  const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
-  window.open(waUrl,'_blank');
-  
-  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
-  document.getElementById('citaForm').reset();
-  horaSeleccionadaInput.value = '';
-  generarHoras({}); // Resetear la lista de horas
-  inputs.forEach(i=>i.classList.remove('filled'));
-});
-
-// Inicialización
-generarHoras({});
-fechaInput.min = new Date().toISOString().split('T')[0]; // Evitar seleccionar fechas pasadas
-</script>
-</body>
-</html>
-t.add('filled'); 
-    else inp.classList.remove('filled');
-  });
-});
-
-// ENVIAR FORMULARIO
-document.getElementById('citaForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const nombre=document.getElementById('nombre').value;
-  const apellido=document.getElementById('apellido').value;
-  const telefono=document.getElementById('telefono').value;
-  const fecha=document.getElementById('fecha').value;
-  const hora=horaSeleccionadaInput.value;
-  const barbero=document.getElementById('barbero').value;
-
-  if(!hora) return alert('Selecciona una hora disponible de la lista.');
-  
-  // Verificar si la hora seleccionada no está ocupada
-  const selectedOption = document.querySelector('.time-option.selected');
-  if (selectedOption && selectedOption.classList.contains('unavailable')) {
-      return alert('La hora seleccionada ya está ocupada. Por favor, elige otra.');
-  }
-
-  // Guardar en Firebase, bajo el nodo específico del barbero
-  db.ref('citas/'+fecha+'/'+barbero+'/'+hora.replace(/ /g, '_')).set({nombre,apellido,telefono}); 
-
-  const mensaje=`Hola! Quiero agendar una cita:\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nFecha: ${fecha}\nHora: ${hora}\nBarbero: ${barbero}`;
-  const waUrl=`https://wa.me/573233489369?text=${encodeURIComponent(mensaje)}`;
-  window.open(waUrl,'_blank');
-  
-  alert('Cita agendada correctamente! Te redirigiremos a WhatsApp.');
-  document.getElementById('citaForm').reset();
-  horaSeleccionadaInput.value = '';
-  generarHoras({}); // Resetear la lista de horas
-  inputs.forEach(i=>i.classList.remove('filled'));
-});
-
-// Inicialización
-generarHoras({});
-fechaInput.min = new Date().toISOString().split('T')[0]; // Evitar seleccionar fechas pasadas
-</script>
-</body>
-</html>
+  padding:
