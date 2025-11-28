@@ -18,7 +18,7 @@
     button.primary{background:var(--accent);color:#000;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:700}
     button{background:#222;color:#fff;border:1px solid #444;padding:10px 12px;border-radius:8px;cursor:pointer}
     .small{font-size:13px;color:var(--muted)}
-    .available-list{max-height:220px;overflow:auto;border:1px dashed var(--line);padding:8px;border-radius:8px;background:#0b0b0b}
+    .available-list{max-height:260px;overflow:auto;border:1px dashed var(--line);padding:8px;border-radius:8px;background:#0b0b0b}
     .slot{padding:8px;border-radius:6px;margin-bottom:6px;cursor:pointer;border:1px solid var(--line)}
     .slot:hover{background:#222}
     .loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite}
@@ -51,7 +51,7 @@
 
         <label>Servicio * (<span class="price">precio en COP</span>)</label>
         <select id="servicio">
-          <!-- Nuevos servicios / precios / duraciones -->
+          <!-- Servicios finales -->
           <option value="Corte" data-price="18000" data-duration="30">Corte de cabello — $18.000 — 30 min</option>
           <option value="Corte + ceja" data-price="22000" data-duration="45">Corte + ceja — $22.000 — 45 min</option>
           <option value="Corte + barba + ceja" data-price="25000" data-duration="65">Corte + barba + ceja — $25.000 — 65 min</option>
@@ -71,7 +71,7 @@
           <div id="status" style="margin-left:8px"></div>
         </div>
 
-        <div style="margin-top:10px" class="small">Horario operativo: 10:00 — 20:40</div>
+        <div style="margin-top:10px" class="small">Horario operativo: 10:00 AM — 9:00 PM</div>
       </div>
 
       <div class="card">
@@ -92,7 +92,7 @@
       getDatabase, ref, get, child, runTransaction
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // CONFIGURA AQUÍ tu Realtime Database URL
+    // CONFIGURA AQUÍ tu Realtime Database URL (ya estaba en tu código; revisa si quieres mantener el config original)
     const firebaseConfig = {
       apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
       authDomain: "lazonadelbarbero-b4e75.firebaseapp.com",
@@ -107,10 +107,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Time constants (en minutos desde 00:00)
-    const OPEN_MIN = 10 * 60;           // 10:00 = 600
-    const CLOSE_MIN = 20 * 60 + 40;     // 20:40 = 1240
-    const STEP_MIN = 10;                // granularidad (10 minutos)
+    // Horario y granularidad
+    const OPEN_MIN = 10 * 60;      // 10:00 -> 600
+    const CLOSE_MIN = 21 * 60;     // 21:00 -> 1260
+    const STEP_MIN = 5;            // granularidad para posibles inicios dentro de un hueco
 
     // DOM
     const servicioEl = document.getElementById('servicio');
@@ -129,22 +129,22 @@
     function parseDuration(){ return Number(servicioEl.selectedOptions[0].dataset.duration) || 30; }
     function parsePrice(){ return Number(servicioEl.selectedOptions[0].dataset.price) || 0; }
 
-    // Formatea minutos a 12h am/pm con formato pedido: "10am", "7:30pm", "12pm"
+    // Formatea minutos a "10am" o "7:30pm"
     function minutesToAmPm(m){
       let hh = Math.floor(m / 60);
       const mm = m % 60;
       const isPM = hh >= 12;
-      const hour12 = ((hh + 11) % 12) + 1; // 1..12
+      let hour12 = hh % 12;
+      if(hour12 === 0) hour12 = 12;
       const mmStr = mm === 0 ? '' : `:${String(mm).padStart(2,'0')}`;
-      const ampm = isPM ? 'pm' : 'am';
-      return `${hour12}${mmStr}${ampm}`;
+      return `${hour12}${mmStr}${isPM ? 'pm' : 'am'}`;
     }
 
-    // También devuelve "HH:MM" 24h por si se necesita (por ahora no usado para UI)
     function minutesToTime24(m){ const hh=String(Math.floor(m/60)).padStart(2,'0'); const mm=String(m%60).padStart(2,'0'); return `${hh}:${mm}`; }
 
     (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
 
+    // --- Firebase fetch appointments for a single barbero + date
     async function fetchAppointmentsRT(barbero, dateISO){
       const path = `appointments/${barbero}/${dateISO}`;
       const snap = await get(child(ref(db), path));
@@ -164,7 +164,7 @@
       return arr;
     }
 
-    // Construye intervalos ocupados y los fusiona
+    // Merge intervals array -> [{start,end},...]
     function buildOccupied(appts){
       const iv = appts.map(a=>({start:a.startMinutes, end:a.endMinutes})).sort((a,b)=>a.start-b.start);
       const merged = [];
@@ -175,17 +175,33 @@
       return merged;
     }
 
-    // Devuelve true si hay conflicto entre [s,e) y cualquier intervalo ocupado
+    // Given list of occupied merged intervals, build free intervals within OPEN_MIN..CLOSE_MIN
+    function buildFreeIntervals(occupied){
+      const free = [];
+      let cursor = OPEN_MIN;
+      for(const iv of occupied){
+        if(iv.start > cursor) free.push({start: cursor, end: iv.start});
+        cursor = Math.max(cursor, iv.end);
+      }
+      if(cursor < CLOSE_MIN) free.push({start: cursor, end: CLOSE_MIN});
+      return free;
+    }
+
+    // Check conflict any overlap
     function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
-    // Calcula slots posibles para una duración (en minutos), respetando OPEN/CLOSE y ocupados
-    function computeSlots(duration, occupied){
-      const out=[];
-      for(let s=OPEN_MIN; s + duration <= CLOSE_MIN; s += STEP_MIN){
-        const e = s + duration;
-        if(!isConflict(s,e,occupied)) out.push(s);
+    // Compute all possible start times (with STEP_MIN granularity) that fit duration inside free intervals
+    function computeSlotsDynamic(duration, occupied){
+      const free = buildFreeIntervals(occupied);
+      const out = [];
+      for(const f of free){
+        // start can be at f.start, f.start + STEP, ..., as long as start + duration <= f.end
+        for(let s = f.start; s + duration <= f.end; s += STEP_MIN){
+          out.push(s);
+        }
       }
-      return out;
+      // sort & unique (should already be sorted)
+      return Array.from(new Set(out)).sort((a,b)=>a-b);
     }
 
     async function refreshAvailability(){
@@ -200,17 +216,19 @@
       try{
         const appts = await fetchAppointmentsRT(barbero, dateVal);
         const occupied = buildOccupied(appts);
-        const slots = computeSlots(duration, occupied);
+        const slots = computeSlotsDynamic(duration, occupied);
 
         horaSelect.innerHTML=''; slotsBox.innerHTML='';
-        if(slots.length===0){ availableList.innerHTML='No hay horas disponibles.'; horaSelect.innerHTML='<option value="">No disponible</option>'; return; }
+        if(slots.length===0){ availableList.innerHTML='No hay horas disponibles.'; horaSelect.innerHTML='<option value="">No disponible</option>'; slotsBox.textContent=''; return; }
 
-        availableList.innerHTML=''; slots.forEach(s=>{
-          const timeLabel = minutesToAmPm(s);
-          const opt=document.createElement('option'); opt.value=s; opt.textContent=`${timeLabel} (${duration} min)`; horaSelect.appendChild(opt);
+        availableList.innerHTML=''; 
+        // add <option> for each slot, and a clickable slot box (shows human label and duration)
+        slots.forEach(s=>{
+          const label = minutesToAmPm(s);
+          const opt=document.createElement('option'); opt.value=s; opt.textContent=`${label} (${duration} min)`; horaSelect.appendChild(opt);
 
           const div=document.createElement('div'); div.className='slot';
-          div.textContent = `${timeLabel} — ${duration} min`;
+          div.textContent = `${label} — ${duration} min`;
           div.onclick=()=>{ 
             horaSelect.value=s; 
             document.querySelectorAll('.slot').forEach(x=>{ x.style.background='#0b0b0b'; x.style.color='#fff'; }); 
@@ -218,6 +236,19 @@
           };
           slotsBox.appendChild(div);
         });
+
+        // Also show existing reservations in the slotsBox (for visual help)
+        if(appts.length){
+          const hr=document.createElement('div'); hr.style.marginTop='8px'; hr.style.borderTop='1px dashed var(--line)'; hr.style.paddingTop='8px';
+          const title=document.createElement('div'); title.className='small'; title.textContent='Reservas existentes:';
+          hr.appendChild(title);
+          appts.forEach(a=>{
+            const el=document.createElement('div'); el.className='small'; el.textContent = `${minutesToAmPm(a.startMinutes)} → ${minutesToAmPm(a.endMinutes)} — ${a.servicio} — ${a.nombre || 'Cliente'}`;
+            hr.appendChild(el);
+          });
+          slotsBox.appendChild(hr);
+        }
+
       } catch(err){
         console.error(err); availableList.innerHTML='Error cargando disponibilidad.'; slotsBox.textContent='-';
       }
@@ -249,8 +280,7 @@
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
 
       // prevent past date/time on same day
-      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d);
-      const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       if(apptDate < todayZero){ alert('No puedes reservar en una fecha pasada.'); return; }
 
       const endMinutes = startMinutes + duration;
@@ -263,6 +293,7 @@
         const appts = await fetchAppointmentsRT(barbero, dateVal);
         const occupied = buildOccupied(appts);
 
+        // check conflict before transaction
         if(isConflict(startMinutes, endMinutes, occupied)){ alert('La hora ya no está disponible. Actualiza disponibilidad y elige otra.'); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
 
         // Run transaction on parent node appointments/{barbero}/{date}
