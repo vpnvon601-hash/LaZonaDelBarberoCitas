@@ -390,7 +390,23 @@
         });
 
         const horaNice = minutesToAmPmWithSpace(startMinutes);
-        const msg = `Reserva confirmada.%0ACliente: ${nombre} ${apellido}%0AServicio: ${servicio} — $${price.toLocaleString('es-CO')}%0ABarbero: ${barbero}%0AFecha: ${dateVal}%0AHora: ${horaNice}%0ADuración: ${duration} min`;
+        const msg = 
+`💈 *NUEVA RESERVA* 💈
+
+👤 *Cliente:* ${nombre} ${apellido}
+📞 *Teléfono:* ${telefono}
+✉️ *Correo:* ${email || 'No registrado'}
+
+💇‍♂️ *Servicio:* ${servicio}
+⏱ *Duración:* ${duration} min
+💲 *Precio:* $${price.toLocaleString('es-CO')}
+
+🧔‍♂️ *Barbero:* ${barbero}
+📅 *Fecha:* ${dateVal}
+⏰ *Hora:* ${horaNice}
+
+✨ Gracias por agendar en *LA ZONA DEL BARBERO*. 
+Estamos listos para darte el mejor flow. 🙌`;
         const phoneDest = '573233489369';
         window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(msg)}`, '_blank');
 
