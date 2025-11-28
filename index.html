@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LA ZONA DEL BARBERO — Agendamiento</title>
+  <style>
+    :root{
+      --bg:#06070a; --card:#0e1115; --muted:#9aa0a6; --line:#1e252b;
+      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03);
+      --danger:#ef6b6b; --good:#35d19b;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#030304 0%,#071018 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+
+    /* Layout */
+    .wrap{max-width:1100px;margin:36px auto;padding:22px;display:grid;grid-template-columns:1fr 380px;gap:22px}
+    @media(max-width:980px){.wrap{grid-template-columns:1fr;padding:16px} }
+
+    .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
+    .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+
+    h3,h4{margin:0 0 12px 0;font-weight:700}
+    .small{font-size:13px;color:var(--muted)}
+
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);font-size:15px}
+    input::placeholder{color:#6f7880}
+
+    .row{display:flex;gap:10px}
+
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(123,227,168,0.06)}
+    button{background:transparent;color:var(--text);border:1px solid var(--line);padding:10px 12px;border-radius:10px;cursor:pointer}
+
+    .meta{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* Available list */
+    .available-list{max-height:320px;overflow:auto;border:1px dashed var(--line);padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00))}
+    .slot{padding:10px;border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid transparent;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);color:var(--text);display:flex;justify-content:space-between;align-items:center}
+    .slot:hover{transform:translateY(-3px);transition:all .18s ease;background:rgba(255,255,255,0.02)}
+    .slot.busy{background:transparent;color:var(--danger);opacity:0.95;cursor:not-allowed;border:1px solid rgba(239,107,107,0.06)}
+    .slot.selected{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;font-weight:800}
+
+    .loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .price{font-weight:700}
+
+    .res-box{background:linear-gradient(180deg, rgba(7,18,24,0.6), rgba(7,18,24,0.4));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);margin-top:12px}
+
+    .cta{background:var(--good);color:#02100f;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block}
+
+    /* Right column */
+    .summary-card{position:sticky;top:36px}
+
+    /* --- NEW: Splash Screen --- */
+    .splash{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#03040a 0%, #071422 100%);z-index:9999}
+    .splash .inner{display:grid;place-items:center;gap:14px;padding:22px;text-align:center}
+    .splash .ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), transparent);box-shadow:0 8px 40px rgba(0,0,0,0.6);border:6px solid rgba(255,255,255,0.03);position:relative}
+    .splash .ring:before{content:'';position:absolute;inset:6px;border-radius:50%;border:6px solid rgba(255,255,255,0.02)}
+    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(123,227,168,0.14);animation:orbit 1.6s linear infinite}
+    @keyframes orbit{0%{transform:translateX(-36px) rotate(0) }50%{transform:translateX(36px) rotate(180deg)}100%{transform:translateX(-36px) rotate(360deg)}}
+    .splash h2{font-size:18px;letter-spacing:1px;margin:6px 0 0 0}
+    .splash p{margin:0;font-size:13px;color:var(--muted)}
+
+    /* --- NEW: Stepper / Tabs for nombre & apellido --- */
+    .stepper{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+    .step{width:40px;height:40px;border-radius:10px;background:var(--glass);display:grid;place-items:center;border:1px solid var(--line);font-weight:700}
+    .step.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018}
+
+    .tabs{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:14px}
+    .tab-panels{display:flex;transition:transform .45s cubic-bezier(.2,.9,.2,1)}
+    .tab-panel{min-width:100%;padding:6px}
+    .tab-controls{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+    /* focus styles */
+    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(123,227,168,0.06);border-color:rgba(123,227,168,0.12)}
+
+    /* tiny helpers */
+    .muted{color:var(--muted)}
+
+    /* responsive tweaks */
+    @media(max-width:680px){
+      .wrap{grid-template-columns:1fr;padding:14px}
+      .splash .ring{width:96px;height:96px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SPLASH -->
+  <div id="splash" class="splash" aria-hidden="false">
+    <div class="inner" role="status">
+      <div class="ring" aria-hidden="true"><div class="dot"></div></div>
+      <h2>Agenda Citas</h2>
+      <p style="font-weight:800;letter-spacing:1px">LA ZONA DEL BARBERO</p>
+      <p class="muted">Cargando — preparando tu experiencia en modo noche</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="brand"><span class="logo">LB</span> LA ZONA DEL BARBERO — <span class="small" style="margin-left:8px">Agendamiento</span></div>
+
+      <div class="card" id="mainCard">
+        <h3>Reservar cita</h3>
+        <p class="small">Complete los campos. Al confirmar se guardará en Firebase Realtime Database y se abrirá WhatsApp.</p>
+
+        <!-- Stepper visual -->
+        <div class="stepper" aria-hidden="false">
+          <div class="step active">1</div>
+          <div class="step">2</div>
+          <div class="small muted">Nombre → Apellido</div>
+        </div>
+
+        <!-- Tabs: Nombre / Apellido -->
+        <div class="tabs">
+          <div class="tab-panels" id="tabPanels">
+            <div class="tab-panel">
+              <label>Nombre *</label>
+              <input id="nombre" type="text" placeholder="Nombre" autocomplete="given-name" />
+            </div>
+            <div class="tab-panel">
+              <label>Apellido *</label>
+              <input id="apellido" type="text" placeholder="Apellido" autocomplete="family-name" />
+            </div>
+          </div>
+
+          <div class="tab-controls">
+            <button id="prevTab" type="button">Atrás</button>
+            <button id="nextTab" class="primary" type="button">Siguiente</button>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <label>Teléfono *</label>
+        <input id="telefono" type="tel" placeholder="+57 3XX XXX XXXX" autocomplete="tel">
+
+        <label>Correo</label>
+        <input id="email" type="email" placeholder="ejemplo@correo.com" autocomplete="email">
+
+        <label>Barbero *</label>
+        <select id="barbero">
+          <option value="">Seleccionar...</option>
+          <option value="Dylan">Dylan</option>
+          <option value="Santiago">Santiago</option>
+          <option value="Alejandro">Alejandro</option>
+          <option value="Leonardo">Leonardo</option>
+        </select>
+
+        <label>Servicio * (<span class="price">precio en COP</span>)</label>
+        <select id="servicio">
+          <option value="">Seleccionar...</option>
+          <option value="Corte" data-price="18000" data-duration="30">Corte de cabello — $18.000 — 30 min</option>
+          <option value="Corte + ceja" data-price="22000" data-duration="45">Corte + ceja — $22.000 — 45 min</option>
+          <option value="Corte + barba + ceja" data-price="25000" data-duration="65">Corte + barba + ceja — $25.000 — 65 min</option>
+          <option value="Corte + barba" data-price="23000" data-duration="45">Corte + barba — $23.000 — 45 min</option>
+          <option value="Corte VIP" data-price="65000" data-duration="150">Corte + Limpieza Facial (VIP) — $65.000 — 2 h 30 min</option>
+        </select>
+
+        <label>Fecha *</label>
+        <input id="fecha" type="date">
+
+        <label>Hora *</label>
+        <div id="availableList" class="available-list">Selecciona servicio (sugerencias). Luego elige barbero y fecha para disponibilidad real.</div>
+        <div style="height:8px"></div>
+        <select id="horaSelect"><option value="">Selecciona hora...</option></select>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="primary" id="btnGuardar">Confirmar y enviar WhatsApp</button>
+          <button id="btnLimpiar" type="button">Limpiar</button>
+          <div id="status" style="margin-left:8px"></div>
+        </div>
+
+        <div class="meta">Horario operativo: 10:00am — 9:00pm</div>
+
+        <!-- resumen visible luego de reservar -->
+        <div id="resumenCita" style="display:none" class="res-box">
+          <h4 style="margin:0 0 8px 0">📌 Resumen de la cita</h4>
+          <div class="small">Cliente: <strong id="resNombre"></strong></div>
+          <div class="small">Barbero: <strong id="resBarbero"></strong></div>
+          <div class="small">Servicio: <strong id="resServicio"></strong></div>
+          <div class="small">Fecha: <strong id="resFecha"></strong></div>
+          <div class="small">Hora: <strong id="resHora"></strong></div>
+
+          <div style="height:8px"></div>
+          <div style="background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:8px;">
+            <div style="font-weight:700;color:var(--text)">💈 Tu tiempo es importante y el nuestro también.</div>
+            <div style="color:var(--muted);margin-top:6px">Si necesitas cancelar, por favor avísanos <strong>10 minutos antes</strong> aquí:</div>
+            <div style="margin-top:8px"><a id="whatsappBtn" class="cta" href="https://wa.me/573233489369" target="_blank">👉 Avisar por WhatsApp</a></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- optionally extra content below main card -->
+
+    </div>
+
+    <div class="card summary-card">
+      <h4>Resumen</h4>
+      <div class="small">Servicio: <strong id="summaryService">-</strong></div>
+      <div class="small">Duración: <strong id="summaryDuration">-</strong> min</div>
+      <div style="height:6px"></div>
+      <div class="small">Precio: <strong id="summaryPrice">-</strong></div>
+      <div style="height:10px"></div>
+      <h4>Horas (vista)</h4>
+      <div id="slotsBox" class="available-list small">Sin datos.</div>
+    </div>
+  </div>
+
+  <!-- Firebase + Logic (sin cambios funcionales respecto al original; sólo adaptado a la nueva estructura visual) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, get, child, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // config (la que me diste)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
+      authDomain: "lazonadelbarbero-b4e75.firebaseapp.com",
+      databaseURL: "https://lazonadelbarbero-b4e75-default-rtdb.firebaseio.com",
+      projectId: "lazonadelbarbero-b4e75",
+      storageBucket: "lazonadelbarbero-b4e75.firebasestorage.app",
+      messagingSenderId: "251180096928",
+      appId: "1:251180096928:web:86d0ab83c7e444af79d8c5",
+      measurementId: "G-G4YL7M4Z00"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const OPEN_MIN = 10 * 60;
+    const CLOSE_MIN = 21 * 60;
+
+    // DOM
+    const servicioEl = document.getElementById('servicio');
+    const barberoEl = document.getElementById('barbero');
+    const fechaEl = document.getElementById('fecha');
+    const horaSelect = document.getElementById('horaSelect');
+    const availableList = document.getElementById('availableList');
+    const slotsBox = document.getElementById('slotsBox');
+    const summaryService = document.getElementById('summaryService');
+    const summaryDuration = document.getElementById('summaryDuration');
+    const summaryPrice = document.getElementById('summaryPrice');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const status = document.getElementById('status');
+
+    function parseDuration(){ return Number(servicioEl.selectedOptions[0]?.dataset.duration) || 0; }
+    function parsePrice(){ return Number(servicioEl.selectedOptions[0]?.dataset.price) || 0; }
+
+    function minutesToShortAmPm(m){
+      const hh = Math.floor(m/60);
+      const mm = m % 60;
+      const isPM = hh >= 12;
+      let h12 = hh % 12;
+      if(h12 === 0) h12 = 12;
+      const mmPart = mm === 0 ? '' : `:${String(mm).padStart(2,'0')}`;
+      return `${h12}${mmPart}${isPM ? 'pm' : 'am'}`;
+    }
+    function minutesToAmPmWithSpace(m){
+      let hh = Math.floor(m/60); const mm = String(m%60).padStart(2,'0');
+      const ampm = hh >= 12 ? 'PM' : 'AM'; hh = hh % 12; if(hh===0) hh=12;
+      return `${hh}:${mm} ${ampm}`;
+    }
+
+    (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
+
+    async function fetchAppointmentsRT(barbero, dateISO){
+      const path = `appointments/${barbero}/${dateISO}`;
+      const snap = await get(child(ref(db), path));
+      const arr = [];
+      if(snap.exists()){
+        const val = snap.val();
+        for(const key of Object.keys(val)){
+          const a = val[key];
+          a._id = key;
+          a.startMinutes = Number(a.startMinutes);
+          a.durationMinutes = Number(a.durationMinutes);
+          a.endMinutes = Number(a.endMinutes || (a.startMinutes + a.durationMinutes));
+          a.nombre = a.nombre || '';
+          a.servicio = a.servicio || '';
+          arr.push(a);
+        }
+        arr.sort((a,b)=>a.startMinutes - b.startMinutes);
+      }
+      return arr;
+    }
+
+    function buildOccupied(appts){
+      const iv = appts.map(a=>({start:a.startMinutes, end:a.endMinutes})).sort((a,b)=>a.start-b.start);
+      const merged = [];
+      for(const x of iv){
+        if(!merged.length || x.start > merged[merged.length-1].end) merged.push({...x});
+        else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, x.end);
+      }
+      return merged;
+    }
+
+    function generateCandidateStarts(duration){
+      const out = [];
+      for(let t = OPEN_MIN; t + duration <= CLOSE_MIN; t += duration){
+        out.push(t);
+      }
+      return out;
+    }
+
+    function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
+
+    async function refreshAvailability(){
+      const service = servicioEl.value;
+      const duration = parseDuration();
+      summaryService.textContent = service || '-';
+      summaryDuration.textContent = duration ? duration : '-';
+      summaryPrice.textContent = parsePrice() ? `$${parsePrice().toLocaleString('es-CO')}` : '-';
+
+      const barbero = barberoEl.value;
+      const dateVal = fechaEl.value;
+
+      availableList.innerHTML = '';
+      slotsBox.innerHTML = '';
+      horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
+
+      if(!service || !duration){
+        availableList.innerHTML = 'Selecciona un servicio para ver sugerencias.';
+        slotsBox.textContent = 'Sin datos.';
+        return;
+      }
+
+      const candidates = generateCandidateStarts(duration);
+
+      if(!barbero || !dateVal){
+        availableList.innerHTML = 'Sugerencias (elige barbero y fecha para disponibilidad real):';
+        candidates.forEach(s => {
+          const div = document.createElement('div');
+          div.className = 'slot';
+          div.textContent = `${minutesToShortAmPm(s)} — ${duration} min`;
+          div.onclick = () => {
+            horaSelect.value = s;
+            document.querySelectorAll('.slot').forEach(x=>{ x.classList.remove('selected'); x.style.background=''; x.style.color=''; });
+            div.classList.add('selected');
+          };
+          slotsBox.appendChild(div);
+          const opt = document.createElement('option'); opt.value = s; opt.textContent = minutesToShortAmPm(s); horaSelect.appendChild(opt);
+        });
+        return;
+      }
+
+      availableList.innerHTML = '<div class="small">Cargando disponibilidad... <span class="loader"></span></div>';
+      try{
+        const appts = await fetchAppointmentsRT(barbero, dateVal);
+        const occupied = buildOccupied(appts);
+
+        availableList.innerHTML = `Disponibilidad para ${barbero} el ${dateVal}:`;
+
+        let anyAvailable = false;
+        for(const s of candidates){
+          const e = s + duration;
+          if(e > CLOSE_MIN) continue;
+
+          const div = document.createElement('div');
+          div.className = 'slot';
+
+          if(isConflict(s,e,occupied)){
+            div.classList.add('busy');
+            div.textContent = `${minutesToShortAmPm(s)} — Hora ya agendada`;
+            slotsBox.appendChild(div);
+            continue;
+          }
+
+          anyAvailable = true;
+          div.textContent = `${minutesToShortAmPm(s)}`;
+          div.onclick = () => {
+            horaSelect.value = s;
+            document.querySelectorAll('.slot').forEach(x=>{ x.classList.remove('selected'); x.style.background=''; x.style.color=''; });
+            div.classList.add('selected');
+          };
+          slotsBox.appendChild(div);
+          const opt = document.createElement('option'); opt.value = s; opt.textContent = minutesToShortAmPm(s); horaSelect.appendChild(opt);
+        }
+
+        if(!anyAvailable){
+          slotsBox.innerHTML = '<div class="small">No hay horas libres para este servicio en esta fecha.</div>';
+          horaSelect.innerHTML = '<option value="">No disponible</option>';
+        } else {
+          if(appts.length){
+            const hr = document.createElement('div'); hr.style.marginTop='8px'; hr.style.borderTop='1px dashed var(--line)'; hr.style.paddingTop='8px';
+            const title = document.createElement('div'); title.className='small'; title.textContent='Reservas existentes:';
+            hr.appendChild(title);
+            appts.forEach(a => {
+              const el = document.createElement('div');
+              el.className = 'small';
+              el.textContent = `${minutesToShortAmPm(a.startMinutes)} → ${minutesToShortAmPm(a.endMinutes)} — ${a.servicio} — ${a.nombre || 'Cliente'}`;
+              hr.appendChild(el);
+            });
+            slotsBox.appendChild(hr);
+          }
+        }
+      } catch(err){
+        console.error(err);
+        availableList.innerHTML = 'Error cargando disponibilidad.';
+        slotsBox.textContent = '-';
+        horaSelect.innerHTML = '<option value="">Error</option>';
+      }
+    }
+
+    servicioEl.addEventListener('change', refreshAvailability);
+    barberoEl.addEventListener('change', refreshAvailability);
+    fechaEl.addEventListener('change', refreshAvailability);
+
+    function validatePhone(p){ return /^\+?57\s?3\d{2}\s?\d{3}\s?\d{3}$/.test(p) || /^3\d{9}$/.test(p); }
+
+    btnLimpiar.addEventListener('click', ()=>{ 
+      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value=''; 
+      horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
+      summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='-';
+      document.getElementById('resumenCita').style.display = 'none';
+    });
+
+    let submitting=false;
+    btnGuardar.addEventListener('click', async ()=>{
+      if(submitting) return;
+      const nombre = document.getElementById('nombre').value.trim();
+      const apellido = document.getElementById('apellido').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const barbero = barberoEl.value;
+      const servicio = servicioEl.value;
+      const duration = parseDuration();
+      const price = parsePrice();
+      const dateVal = fechaEl.value;
+      const startMinutes = Number(horaSelect.value);
+
+      if(!nombre||!apellido||!telefono||!barbero||!servicio||!dateVal||isNaN(startMinutes)){ alert('Completa todos los campos obligatorios.'); return; }
+      if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
+
+      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      // fecha pasada check desactivada
+
+      const endMinutes = startMinutes + duration;
+      if(endMinutes > CLOSE_MIN){ alert('La cita terminaría fuera del horario operativo.'); return; }
+
+      submitting=true; btnGuardar.disabled=true; status.innerHTML='<span class="loader"></span>';
+
+      try{
+        const appts = await fetchAppointmentsRT(barbero, dateVal);
+        const occupied = buildOccupied(appts);
+
+        if(isConflict(startMinutes, endMinutes, occupied)){ alert('La hora ya no está disponible. Actualiza disponibilidad y elige otra.'); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
+
+        const parentPath = `appointments/${barbero}/${dateVal}`;
+        const parentRef = ref(db, parentPath);
+
+        await runTransaction(parentRef, (current) => {
+          if(current === null) current = {};
+          const existing = Object.values(current || {}).map(x => ({ start: Number(x.startMinutes), end: Number(x.endMinutes || (Number(x.startMinutes) + Number(x.durationMinutes))) }));
+          existing.sort((a,b)=>a.start-b.start);
+          for(const iv of existing) if(startMinutes < iv.end && endMinutes > iv.start) throw new Error('CONFLICT');
+
+          const key = String(startMinutes);
+          current[key] = {
+            nombre: `${nombre} ${apellido}`,
+            telefono,
+            email: email || '',
+            barbero,
+            servicio,
+            durationMinutes: duration,
+            startMinutes,
+            endMinutes,
+            date: dateVal,
+            priceCOP: price,
+            createdAt: Date.now()
+          };
+          return current;
+        });
+
+        const horaNice = minutesToAmPmWithSpace(startMinutes);
+        const msg = 
+`💈 *NUEVA RESERVA* 💈
+
+👤 *Cliente:* ${nombre} ${apellido}
+📞 *Teléfono:* ${telefono}
+✉️ *Correo:* ${email || 'No registrado'}
+
+💇‍♂️ *Servicio:* ${servicio}
+⏱ *Duración:* ${duration} min
+💲 *Precio:* $${price.toLocaleString('es-CO')}
+
+🧔‍♂️ *Barbero:* ${barbero}
+📅 *Fecha:* ${dateVal}
+⏰ *Hora:* ${horaNice}
+
+✨ Gracias por agendar en *LA ZONA DEL BARBERO*. 
+Estamos listos para darte el mejor flow. 🙌`;
+        const phoneDest = '573233489369';
+        window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(msg)}`, '_blank');
+
+        // Show resumen and set whatsapp cancel link
+        document.getElementById('resNombre').textContent = `${nombre} ${apellido}`;
+        document.getElementById('resBarbero').textContent = barbero;
+        document.getElementById('resServicio').textContent = servicio;
+        document.getElementById('resFecha').textContent = dateVal;
+        document.getElementById('resHora').textContent = minutesToShortAmPm(startMinutes);
+        document.getElementById('resumenCita').style.display = 'block';
+        document.getElementById('whatsappBtn').href = 'https://wa.me/573233489369';
+
+        alert('Cita guardada correctamente.');
+        await refreshAvailability();
+      } catch(err){
+        console.error('Transaction error:', err);
+        if(String(err).includes('CONFLICT')) alert('La hora no está disponible (conflicto).');
+        else alert('Error guardando la cita. Revisa la consola.');
+      } finally {
+        submitting=false; btnGuardar.disabled=false; status.innerHTML='';
+      }
+    });
+
+    // initial
+    refreshAvailability();
+
+    /* --- UI: Splash hide + Tabs behavior (NAME / SURNAME) --- */
+    const splash = document.getElementById('splash');
+    window.addEventListener('load', ()=>{
+      // keep splash visible at least 700ms for nicer feeling
+      setTimeout(()=>{
+        splash.style.transition='opacity .6s ease, transform .6s ease';
+        splash.style.opacity='0';
+        splash.style.transform='scale(.98)';
+        setTimeout(()=>{ splash.remove(); }, 700);
+      }, 700);
+    });
+
+    // Tabs
+    const tabPanels = document.getElementById('tabPanels');
+    const steps = document.querySelectorAll('.step');
+    const prevTab = document.getElementById('prevTab');
+    const nextTab = document.getElementById('nextTab');
+    let tabIndex = 0; // 0 = nombre, 1 = apellido
+    const nombreInput = document.getElementById('nombre');
+    const apellidoInput = document.getElementById('apellido');
+
+    function updateTabs(){
+      tabPanels.style.transform = `translateX(-${tabIndex * 100}%)`;
+      steps.forEach((s,i)=> s.classList.toggle('active', i === tabIndex));
+      prevTab.disabled = tabIndex === 0;
+      nextTab.textContent = tabIndex === 0 ? 'Siguiente' : 'Listo';
+      // focus the visible input
+      setTimeout(()=>{
+        if(tabIndex===0) nombreInput.focus(); else apellidoInput.focus();
+      }, 220);
+    }
+
+    prevTab.addEventListener('click', ()=>{ if(tabIndex>0){ tabIndex--; updateTabs(); } });
+    nextTab.addEventListener('click', ()=>{
+      if(tabIndex === 0){
+        // if empty, shake
+        if(!nombreInput.value.trim()){ nombreInput.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:180}); nombreInput.focus(); return; }
+        tabIndex = 1; updateTabs();
+      } else {
+        // finish -> focus next logical field (telefono)
+        if(!apellidoInput.value.trim()){ apellidoInput.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:180}); apellidoInput.focus(); return; }
+        document.getElementById('telefono').focus();
+      }
+    });
+
+    // allow Enter to move forward
+    nombreInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); nextTab.click(); } });
+    apellidoInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); nextTab.click(); } });
+
+    // initial tab state
+    updateTabs();
+
+  </script>
+</body>
+</html>
