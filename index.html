@@ -51,10 +51,12 @@
 
         <label>Servicio * (<span class="price">precio en COP</span>)</label>
         <select id="servicio">
-          <!-- Confirmed services/prices/durations -->
-          <option value="Corte" data-price="30000" data-duration="30">Corte — $30.000 — 30 min</option>
-          <option value="Corte + Barba" data-price="45000" data-duration="65">Corte + Barba — $45.000 — 65 min</option>
-          <option value="Corte VIP" data-price="90000" data-duration="150">Corte VIP — $90.000 — 2 h 30 min</option>
+          <!-- Nuevos servicios / precios / duraciones -->
+          <option value="Corte" data-price="18000" data-duration="30">Corte de cabello — $18.000 — 30 min</option>
+          <option value="Corte + ceja" data-price="22000" data-duration="45">Corte + ceja — $22.000 — 45 min</option>
+          <option value="Corte + barba + ceja" data-price="25000" data-duration="65">Corte + barba + ceja — $25.000 — 65 min</option>
+          <option value="Corte + barba" data-price="23000" data-duration="45">Corte + barba — $23.000 — 45 min</option>
+          <option value="Corte + Limpieza Facial (VIP)" data-price="65000" data-duration="150">Corte + Limpieza Facial (VIP) — $65.000 — 2 h 30 min</option>
         </select>
 
         <label>Fecha *</label><input id="fecha" type="date">
@@ -105,10 +107,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Time constants
-    const OPEN_MIN = 10*60;
-    const CLOSE_MIN = 20*60 + 40;
-    const STEP_MIN = 10;
+    // Time constants (en minutos desde 00:00)
+    const OPEN_MIN = 10 * 60;           // 10:00 = 600
+    const CLOSE_MIN = 20 * 60 + 40;     // 20:40 = 1240
+    const STEP_MIN = 10;                // granularidad (10 minutos)
 
     // DOM
     const servicioEl = document.getElementById('servicio');
@@ -126,7 +128,20 @@
 
     function parseDuration(){ return Number(servicioEl.selectedOptions[0].dataset.duration) || 30; }
     function parsePrice(){ return Number(servicioEl.selectedOptions[0].dataset.price) || 0; }
-    function minutesToTime(m){ const hh=String(Math.floor(m/60)).padStart(2,'0'); const mm=String(m%60).padStart(2,'0'); return `${hh}:${mm}`; }
+
+    // Formatea minutos a 12h am/pm con formato pedido: "10am", "7:30pm", "12pm"
+    function minutesToAmPm(m){
+      let hh = Math.floor(m / 60);
+      const mm = m % 60;
+      const isPM = hh >= 12;
+      const hour12 = ((hh + 11) % 12) + 1; // 1..12
+      const mmStr = mm === 0 ? '' : `:${String(mm).padStart(2,'0')}`;
+      const ampm = isPM ? 'pm' : 'am';
+      return `${hour12}${mmStr}${ampm}`;
+    }
+
+    // También devuelve "HH:MM" 24h por si se necesita (por ahora no usado para UI)
+    function minutesToTime24(m){ const hh=String(Math.floor(m/60)).padStart(2,'0'); const mm=String(m%60).padStart(2,'0'); return `${hh}:${mm}`; }
 
     (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
 
@@ -149,6 +164,7 @@
       return arr;
     }
 
+    // Construye intervalos ocupados y los fusiona
     function buildOccupied(appts){
       const iv = appts.map(a=>({start:a.startMinutes, end:a.endMinutes})).sort((a,b)=>a.start-b.start);
       const merged = [];
@@ -159,11 +175,13 @@
       return merged;
     }
 
+    // Devuelve true si hay conflicto entre [s,e) y cualquier intervalo ocupado
     function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
+    // Calcula slots posibles para una duración (en minutos), respetando OPEN/CLOSE y ocupados
     function computeSlots(duration, occupied){
       const out=[];
-      for(let s=OPEN_MIN; s+duration<=CLOSE_MIN; s+=STEP_MIN){
+      for(let s=OPEN_MIN; s + duration <= CLOSE_MIN; s += STEP_MIN){
         const e = s + duration;
         if(!isConflict(s,e,occupied)) out.push(s);
       }
@@ -188,10 +206,16 @@
         if(slots.length===0){ availableList.innerHTML='No hay horas disponibles.'; horaSelect.innerHTML='<option value="">No disponible</option>'; return; }
 
         availableList.innerHTML=''; slots.forEach(s=>{
-          const time = minutesToTime(s);
-          const opt=document.createElement('option'); opt.value=s; opt.textContent=time + ` (${duration} min)`; horaSelect.appendChild(opt);
-          const div=document.createElement('div'); div.className='slot'; div.textContent=time;
-          div.onclick=()=>{ horaSelect.value=s; document.querySelectorAll('.slot').forEach(x=>{ x.style.background='#0b0b0b'; x.style.color='#fff'; }); div.style.background='#fff'; div.style.color='#000'; };
+          const timeLabel = minutesToAmPm(s);
+          const opt=document.createElement('option'); opt.value=s; opt.textContent=`${timeLabel} (${duration} min)`; horaSelect.appendChild(opt);
+
+          const div=document.createElement('div'); div.className='slot';
+          div.textContent = `${timeLabel} — ${duration} min`;
+          div.onclick=()=>{ 
+            horaSelect.value=s; 
+            document.querySelectorAll('.slot').forEach(x=>{ x.style.background='#0b0b0b'; x.style.color='#fff'; }); 
+            div.style.background='#fff'; div.style.color='#000'; 
+          };
           slotsBox.appendChild(div);
         });
       } catch(err){
@@ -225,8 +249,12 @@
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
 
       // prevent past date/time on same day
-      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d);
+      const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       if(apptDate < todayZero){ alert('No puedes reservar en una fecha pasada.'); return; }
+
+      const endMinutes = startMinutes + duration;
+      if(endMinutes > CLOSE_MIN){ alert('La cita seleccionada terminaría fuera del horario operativo. Elige otra hora.'); return; }
 
       submitting=true; btnGuardar.disabled=true; status.innerHTML='<span class="loader"></span>';
 
@@ -234,7 +262,7 @@
         // re-fetch current appointments
         const appts = await fetchAppointmentsRT(barbero, dateVal);
         const occupied = buildOccupied(appts);
-        const endMinutes = startMinutes + duration;
+
         if(isConflict(startMinutes, endMinutes, occupied)){ alert('La hora ya no está disponible. Actualiza disponibilidad y elige otra.'); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
 
         // Run transaction on parent node appointments/{barbero}/{date}
@@ -252,10 +280,10 @@
             if(!merged.length || it.start > merged[merged.length-1].end) merged.push({...it});
             else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, it.end);
           }
-          // check conflict
+          // check conflict (transactional)
           for(const iv of merged) if(startMinutes < iv.end && endMinutes > iv.start) throw new Error('CONFLICT');
 
-          // set new child under key = startMinutes
+          // set new child under key = startMinutes (string)
           const key = String(startMinutes);
           current[key] = {
             nombre: `${nombre} ${apellido}`,
@@ -274,12 +302,14 @@
         });
 
         // success -> open WhatsApp
-        const horaStr = minutesToTime(startMinutes);
+        const horaStr = minutesToAmPm(startMinutes);
         const msg = `Reserva confirmada.%0ACliente: ${nombre} ${apellido}%0AServicio: ${servicio} — $${price.toLocaleString('es-CO')}%0ABarbero: ${barbero}%0AFecha: ${dateVal}%0AHora: ${horaStr}%0ADuración: ${duration} min`;
         const phoneDest = '573233489369';
         window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(decodeURIComponent(msg))}`, '_blank');
 
         alert('Cita guardada correctamente.');
+        // refrescar disponibilidad para que muestre la nueva ocupación
+        await refreshAvailability();
       } catch(err){
         console.error('Transaction error:', err);
         if(String(err).includes('CONFLICT')) alert('La hora no está disponible (conflicto).');
