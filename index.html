@@ -6,7 +6,7 @@
   <title>LA ZONA DEL BARBERO — Agendamiento</title>
   <style>
     :root{
-      --bg:#0d0d0d; --card:#161616; --muted:#888; --line:#2a2a2a;
+      --bg:#0d0d0d; --card:#161616; --muted:#9aa0a6; --line:#2a2a2a;
       --text:#fff; --accent:#fff; --bad:#c0392b; --good:#1abc9c;
     }
     *{box-sizing:border-box}
@@ -22,14 +22,16 @@
     button{background:#222;color:#fff;border:1px solid #444;padding:10px 12px;border-radius:8px;cursor:pointer}
     .small{font-size:13px;color:var(--muted)}
     .available-list{max-height:300px;overflow:auto;border:1px dashed var(--line);padding:8px;border-radius:8px;background:#0b0b0b}
-    .slot{padding:8px;border-radius:6px;margin-bottom:6px;cursor:pointer;border:1px solid var(--line);background:#0b0b0b;color:var(--text)}
+    .slot{padding:8px;border-radius:6px;margin-bottom:6px;cursor:pointer;border:1px solid var(--line);background:#0b0b0b;color:var(--text);display:flex;justify-content:space-between;align-items:center}
     .slot:hover{background:#222}
-    .slot.busy{background:rgba(192,57,43,0.12);color:var(--bad);border-color:#900;cursor:not-allowed}
+    .slot.busy{background:rgba(192,57,43,0.10);color:var(--bad);border-color:#900;cursor:not-allowed}
     .slot.selected{background:#fff;color:#000}
     .loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .price{font-weight:700}
     .meta{font-size:12px;color:var(--muted);margin-top:6px}
+    .res-box{background:#0f1720;padding:12px;border-radius:8px;border:1px solid #222;margin-top:12px}
+    .cta{background:#25D366;color:#000;padding:10px 14px;border-radius:8px;text-decoration:none;font-weight:700}
   </style>
 </head>
 <body>
@@ -62,13 +64,13 @@
           <option value="Corte + ceja" data-price="22000" data-duration="45">Corte + ceja — $22.000 — 45 min</option>
           <option value="Corte + barba + ceja" data-price="25000" data-duration="65">Corte + barba + ceja — $25.000 — 65 min</option>
           <option value="Corte + barba" data-price="23000" data-duration="45">Corte + barba — $23.000 — 45 min</option>
-          <option value="Corte + Limpieza Facial (VIP)" data-price="65000" data-duration="150">Corte + Limpieza Facial (VIP) — $65.000 — 2 h 30 min</option>
+          <option value="Corte VIP" data-price="65000" data-duration="150">Corte + Limpieza Facial (VIP) — $65.000 — 2 h 30 min</option>
         </select>
 
         <label>Fecha *</label><input id="fecha" type="date">
 
         <label>Hora *</label>
-        <div id="availableList" class="available-list">Selecciona servicio (se muestran sugerencias). Luego elige barbero y fecha para ver disponibilidad real.</div>
+        <div id="availableList" class="available-list">Selecciona servicio (sugerencias). Luego elige barbero y fecha para disponibilidad real.</div>
         <div style="height:8px"></div>
         <select id="horaSelect"><option value="">Selecciona hora...</option></select>
 
@@ -79,12 +81,36 @@
         </div>
 
         <div class="meta">Horario operativo: 10:00am — 9:00pm</div>
+
+        <!-- resumen visible luego de reservar -->
+        <div id="resumenCita" style="display:none" class="res-box">
+          <h4 style="margin:0 0 8px 0">📌 Resumen de la cita</h4>
+          <div class="small">Cliente: <strong id="resNombre"></strong></div>
+          <div class="small">Barbero: <strong id="resBarbero"></strong></div>
+          <div class="small">Servicio: <strong id="resServicio"></strong></div>
+          <div class="small">Fecha: <strong id="resFecha"></strong></div>
+          <div class="small">Hora: <strong id="resHora"></strong></div>
+
+          <div style="height:8px"></div>
+          <!-- Texto llamativo opción C -->
+          <div style="background:#071218;padding:10px;border-radius:8px;margin-bottom:8px;">
+            <div style="font-weight:700;color:#fff">💈 Tu tiempo es importante y el nuestro también.</div>
+            <div style="color:var(--muted);margin-top:6px">
+              Si necesitas cancelar, por favor avísanos <strong>10 minutos antes</strong> aquí:
+            </div>
+            <div style="margin-top:8px">
+              <a id="whatsappBtn" class="cta" href="https://wa.me/573233489369" target="_blank">👉 Avisar por WhatsApp</a>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <div class="card">
         <h4>Resumen</h4>
         <div class="small">Servicio: <strong id="summaryService">-</strong></div>
         <div class="small">Duración: <strong id="summaryDuration">-</strong> min</div>
+        <div style="height:6px"></div>
         <div class="small">Precio: <strong id="summaryPrice">-</strong></div>
         <div style="height:10px"></div>
         <h4>Horas (vista)</h4>
@@ -97,7 +123,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, get, child, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // --- TU CONFIG FIREBASE (mantén la tuya si es distinta) ---
+    // --- TU CONFIG FIREBASE (usé la que me diste) ---
     const firebaseConfig = {
       apiKey: "AIzaSyAN8piM_UR3kLDUnJFYe5diazItfvYIlSA",
       authDomain: "lazonadelbarbero-b4e75.firebaseapp.com",
@@ -129,11 +155,11 @@
     const btnLimpiar = document.getElementById('btnLimpiar');
     const status = document.getElementById('status');
 
-    // parse helpers
+    // helpers
     function parseDuration(){ return Number(servicioEl.selectedOptions[0]?.dataset.duration) || 0; }
     function parsePrice(){ return Number(servicioEl.selectedOptions[0]?.dataset.price) || 0; }
 
-    // Formato: devuelve "10am" o "7:30pm" (minúsculas, sin espacio en el suffix)
+    // Formato corto: "10am" o "7:30pm" (minúsculas, sin espacios)
     function minutesToShortAmPm(m){
       const hh = Math.floor(m/60);
       const mm = m % 60;
@@ -143,8 +169,7 @@
       const mmPart = mm === 0 ? '' : `:${String(mm).padStart(2,'0')}`;
       return `${h12}${mmPart}${isPM ? 'pm' : 'am'}`;
     }
-
-    // Formato legible con espacio y ceros: "7:30 pm" (solo para WhatsApp/depuración)
+    // Legible con espacio y mayúsculas para WhatsApp
     function minutesToAmPmWithSpace(m){
       let hh = Math.floor(m/60); const mm = String(m%60).padStart(2,'0');
       const ampm = hh >= 12 ? 'PM' : 'AM'; hh = hh % 12; if(hh===0) hh=12;
@@ -153,7 +178,7 @@
 
     (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
 
-    // --- Firebase read appointments for barbero + date
+    // --- fetch appointments for barbero+date
     async function fetchAppointmentsRT(barbero, dateISO){
       const path = `appointments/${barbero}/${dateISO}`;
       const snap = await get(child(ref(db), path));
@@ -198,7 +223,7 @@
       return free;
     }
 
-    // Returns array of suggested starts from OPEN stepping by duration (for quick preview)
+    // Suggested starts stepping by duration (for quick preview)
     function generateSuggestedStarts(duration){
       const out = [];
       for(let t = OPEN_MIN; t + duration <= CLOSE_MIN; t += duration){
@@ -207,7 +232,7 @@
       return out;
     }
 
-    // Returns only the START of each free interval if it fits duration (no internal steps)
+    // Returns START of each free interval if it fits duration (no internal steps)
     function computeStartOfFreeIntervals(duration, occupied){
       const free = buildFreeIntervals(occupied);
       const out = [];
@@ -219,10 +244,10 @@
       return out.sort((a,b)=>a-b);
     }
 
-    // check overlap
+    // overlap check
     function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
-    // refresh UI: shows either suggested list (if no barbero/date) or real availability
+    // refresh UI
     async function refreshAvailability(){
       const service = servicioEl.value;
       const duration = parseDuration();
@@ -233,12 +258,11 @@
       const barbero = barberoEl.value;
       const dateVal = fechaEl.value;
 
-      // Clear UI
+      // Clear
       availableList.innerHTML = '';
       slotsBox.innerHTML = '';
       horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
 
-      // If service not chosen, prompt
       if(!service || !duration){
         availableList.innerHTML = 'Selecciona un servicio para ver sugerencias.';
         slotsBox.textContent = 'Sin datos.';
@@ -253,7 +277,6 @@
           const div = document.createElement('div');
           div.className = 'slot';
           div.textContent = `${minutesToShortAmPm(s)} — ${duration} min`;
-          // clicking will set horaSelect (but won't check availability yet)
           div.onclick = () => {
             horaSelect.value = s;
             document.querySelectorAll('.slot').forEach(x=>{ x.classList.remove('selected'); x.style.background=''; x.style.color=''; });
@@ -265,26 +288,22 @@
         return;
       }
 
-      // barbero + date selected -> show real availability
+      // barbero + date -> real availability
       availableList.innerHTML = '<div class="small">Cargando disponibilidad... <span class="loader"></span></div>';
 
       try{
         const appts = await fetchAppointmentsRT(barbero, dateVal);
         const occupied = buildOccupied(appts);
-        // get starts = start of free intervals that fit duration
         const starts = computeStartOfFreeIntervals(duration, occupied);
 
         availableList.innerHTML = `Disponibilidad para ${barbero} el ${dateVal}:`;
-        // add visual list: iterate through the day in blocks of free intervals and busy ones for clarity
-        // First, show free-start options (only the starts)
+
         if(starts.length === 0){
           slotsBox.innerHTML = '<div class="small">No hay huecos disponibles para este servicio en esta fecha.</div>';
           horaSelect.innerHTML = '<option value="">No disponible</option>';
         } else {
           horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
-          // Create map of busy ranges for display
-          // We'll display both available starts and busy reservations
-          // First display available starts
+          // show starts
           starts.forEach(s => {
             const div = document.createElement('div');
             div.className = 'slot';
@@ -298,7 +317,7 @@
             const opt = document.createElement('option'); opt.value = s; opt.textContent = minutesToShortAmPm(s); horaSelect.appendChild(opt);
           });
 
-          // Then show existing reservations (for context) and mark overlaps as busy if their start equals a suggested start
+          // show existing reservations for context
           if(appts.length){
             const hr = document.createElement('div'); hr.style.marginTop='8px'; hr.style.borderTop='1px dashed var(--line)'; hr.style.paddingTop='8px';
             const title = document.createElement('div'); title.className='small'; title.textContent='Reservas existentes:';
@@ -312,33 +331,16 @@
             slotsBox.appendChild(hr);
           }
 
-          // mark any suggested start that is actually conflicting as busy (edge-case where computeStartOfFreeIntervals provided start but in DB concurrent changed)
-          // Also, to be thorough: If an existing appointment starts exactly at a suggested start, that start should be shown but marked as busy.
-          // We'll check all option values vs appts.
-          const apptStarts = new Set(appts.map(a=>a.startMinutes));
-          // mark options and slots
-          const slotDivs = Array.from(slotsBox.querySelectorAll('.slot'));
-          slotDivs.forEach(div => {
-            const text = div.textContent || '';
-            const maybe = text.split(' ')[0]; // like "10am"
-            // Find matching option by label
-            // find the option with same text
-            const opt = Array.from(horaSelect.options).find(o => o.text === maybe);
-            // But safer: compare minutes by parsing label back — we already have starts array to line up
-          });
-
-          // Additionally: visually mark as busy any option that collides with an existing appointment
+          // mark conflicting starts as busy (safety)
           const opts = Array.from(horaSelect.options).filter(o=>o.value);
           opts.forEach(o=>{
             const s = Number(o.value);
             const e = s + duration;
             if(isConflict(s,e,occupied)){
-              // find corresponding slot div and mark busy
               const div = Array.from(slotsBox.children).find(d => d.classList && d.classList.contains('slot') && d.textContent && d.textContent.startsWith(minutesToShortAmPm(s)));
               if(div){
                 div.classList.add('busy');
                 div.textContent = `${minutesToShortAmPm(s)} — Hora ya agendada`;
-                // remove option to prevent selection
                 o.remove();
               }
             }
@@ -363,8 +365,9 @@
     // clear
     btnLimpiar.addEventListener('click', ()=>{ 
       document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value=''; 
-      horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (se muestran sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
+      horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
       summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='-';
+      document.getElementById('resumenCita').style.display = 'none';
     });
 
     // submit
@@ -408,8 +411,8 @@
 
         await runTransaction(parentRef, (current) => {
           if(current === null) current = {};
-          // check conflicts in current snapshot
-          const existing = Object.values(current).map(x => ({ start: Number(x.startMinutes), end: Number(x.endMinutes || (Number(x.startMinutes) + Number(x.durationMinutes))) }));
+          // check conflicts again in snapshot
+          const existing = Object.values(current || {}).map(x => ({ start: Number(x.startMinutes), end: Number(x.endMinutes || (Number(x.startMinutes) + Number(x.durationMinutes))) }));
           existing.sort((a,b)=>a.start-b.start);
           for(const iv of existing) if(startMinutes < iv.end && endMinutes > iv.start) throw new Error('CONFLICT');
 
@@ -430,15 +433,24 @@
           return current;
         });
 
-        // success -> whatsapp
-        const horaStr = minutesToShortAmPm(startMinutes);
+        // success -> whatsapp + resumen
         const horaNice = minutesToAmPmWithSpace(startMinutes);
         const msg = `Reserva confirmada.%0ACliente: ${nombre} ${apellido}%0AServicio: ${servicio} — $${price.toLocaleString('es-CO')}%0ABarbero: ${barbero}%0AFecha: ${dateVal}%0AHora: ${horaNice}%0ADuración: ${duration} min`;
         const phoneDest = '573233489369';
-        window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(decodeURIComponent(msg))}`, '_blank');
+        window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(msg)}`, '_blank');
+
+        // Show resumen
+        document.getElementById('resNombre').textContent = `${nombre} ${apellido}`;
+        document.getElementById('resBarbero').textContent = barbero;
+        document.getElementById('resServicio').textContent = servicio;
+        document.getElementById('resFecha').textContent = dateVal;
+        document.getElementById('resHora').textContent = minutesToShortAmPm(startMinutes);
+        document.getElementById('resumenCita').style.display = 'block';
+
+        // Ensure whatsapp link for cancellations points to your number
+        document.getElementById('whatsappBtn').href = 'https://wa.me/573233489369';
 
         alert('Cita guardada correctamente.');
-        // refresh
         await refreshAvailability();
       } catch(err){
         console.error('Transaction error:', err);
@@ -448,6 +460,9 @@
         submitting=false; btnGuardar.disabled=false; status.innerHTML='';
       }
     });
+
+    // inicial
+    refreshAvailability();
   </script>
 </body>
 </html>
