@@ -88,6 +88,11 @@
       .wrap{grid-template-columns:1fr;padding:14px}
       .splash .ring{width:96px;height:96px}
     }
+    
+    /* --- Barbero Photo CSS RESTAURADO --- */
+    .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease}
+    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(123,227,168,0.1)}
+    .barbero-photo-container .info{font-size:14px; font-weight:700;}
   </style>
 </head>
 <body>
@@ -141,12 +146,12 @@
         <label>Barbero *</label>
         <select id="barbero">
           <option value="">Seleccionar...</option>
-          <option value="Dylan">Dilan</option>
-          <option value="Santiago">Santiago</option>
-          <option value="Alejandro">Alejandro</option>
-          <option value="Leonardo">Leonardo</option>
-        </select>
-
+          </select>
+        
+        <div id="barberoPhoto" class="barbero-photo-container" style="opacity:0">
+          <img id="barberoImage" src="" alt="Foto del Barbero" style="display:none">
+          <div class="info">Selecciona un barbero para ver su foto y contacto.</div>
+        </div>
         <label>Servicio * (<span class="price">precio en COP</span>)</label>
         <select id="servicio">
           <option value="">Seleccionar...</option>
@@ -154,7 +159,7 @@
           <option value="Corte + ceja" data-price="22000" data-duration="75">Corte + ceja — $22.000 — 1 h 15 min</option>
           <option value="Corte + barba + ceja" data-price="25000" data-duration="100">Corte + barba + ceja — $25.000 — 1 h 40 min</option>
           <option value="Corte + barba" data-price="23000" data-duration="85">Corte + barba — $23.000 — 1 h 25 min</option>
-          <option value="Corte VIP" data-price="65000" data-duration="150">Corte + Limpieza Facial (VIP) — $70.000 — 2 h 30 min</option>
+          <option value="Corte VIP" data-price="70000" data-duration="150">Corte + Limpieza Facial (VIP) — $70.000 — 2 h 30 min</option>
         </select>
 
         <label>Fecha *</label>
@@ -198,7 +203,7 @@
       <div class="small">Servicio: <strong id="summaryService">-</strong></div>
       <div class="small">Duración: <strong id="summaryDuration">-</strong> min</div>
       <div style="height:6px"></div>
-      <div class="small">Precio: <strong id="summaryPrice">-</strong></div>
+      <div class="small">Precio: <strong id="summaryPrice">Consultar con barbero</strong></div>
       <div style="height:10px"></div>
       <h4>Horas (vista)</h4>
       <div id="slotsBox" class="available-list small">Sin datos.</div>
@@ -225,6 +230,17 @@
 
     const OPEN_MIN = 10 * 60;
     const CLOSE_MIN = 21 * 60;
+    
+    // ************************************
+    // ** DATOS DE BARBEROS Y FOTO **
+    // ************************************
+    const BARBERS = {
+      "Dilan": { phone: "573233489369", image: "https://via.placeholder.com/200?text=Dilan" }, // URL Temporal. ¡Reemplazar!
+      "Alejandro": { phone: "573219621581", image: "https://via.placeholder.com/200?text=Alejandro" }, // URL Temporal. ¡Reemplazar!
+      "Leonardo": { phone: "573215676362", image: "20251205_130628.jpg" }, 
+      "Santiago": { phone: "573022441609", image: "20251205_130541.jpg" } 
+    };
+    const DEFAULT_CANCEL_PHONE = "573233489369"; 
 
     // DOM
     const servicioEl = document.getElementById('servicio');
@@ -239,9 +255,15 @@
     const btnGuardar = document.getElementById('btnGuardar');
     const btnLimpiar = document.getElementById('btnLimpiar');
     const status = document.getElementById('status');
-
+    // NUEVOS DOM (Restaurados)
+    const barberoPhotoContainer = document.getElementById('barberoPhoto');
+    const barberoImageEl = document.getElementById('barberoImage');
+    const barberoInfoEl = barberoPhotoContainer.querySelector('.info');
+    const whatsappCancelBtn = document.getElementById('whatsappBtn');
+    
     function parseDuration(){ return Number(servicioEl.selectedOptions[0]?.dataset.duration) || 0; }
     function parsePrice(){ return Number(servicioEl.selectedOptions[0]?.dataset.price) || 0; }
+
 
     function minutesToShortAmPm(m){
       const hh = Math.floor(m/60);
@@ -259,6 +281,46 @@
     }
 
     (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
+    
+    // ************************************
+    // ** Llenar el SELECT de Barbero (Restaurado) **
+    // ************************************
+    function setupBarberoSelect(){
+      barberoEl.innerHTML = '<option value="">Seleccionar...</option>';
+      for(const name in BARBERS){
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        barberoEl.appendChild(opt);
+      }
+    }
+
+    // ************************************
+    // ** Actualizar foto del barbero (Restaurado) **
+    // ************************************
+    function updateBarberoPhoto(barberoName){
+      const data = BARBERS[barberoName];
+      if(data && data.image){
+        barberoImageEl.src = data.image;
+        barberoImageEl.alt = `Foto de ${barberoName}`;
+        barberoImageEl.style.display = 'block';
+        barberoInfoEl.textContent = `Barbero: ${barberoName} | WhatsApp: +${data.phone}`;
+        barberoPhotoContainer.style.opacity = '1';
+      } else if (barberoName) {
+        // En caso de que no tenga URL (solo si el nombre existe pero no la imagen)
+        barberoImageEl.style.display = 'none';
+        barberoImageEl.src = '';
+        const phone = data ? '+' + data.phone : 'No disponible';
+        barberoInfoEl.textContent = `Barbero: ${barberoName} | WhatsApp: ${phone} (Foto no disponible)`;
+        barberoPhotoContainer.style.opacity = '1';
+      } else {
+        barberoImageEl.style.display = 'none';
+        barberoImageEl.src = '';
+        barberoInfoEl.textContent = 'Selecciona un barbero para ver su foto y contacto.';
+        barberoPhotoContainer.style.opacity = '0';
+      }
+    }
+
 
     async function fetchAppointmentsRT(barbero, dateISO){
       const path = `appointments/${barbero}/${dateISO}`;
@@ -304,12 +366,18 @@
     async function refreshAvailability(){
       const service = servicioEl.value;
       const duration = parseDuration();
+      const price = parsePrice();
       summaryService.textContent = service || '-';
       summaryDuration.textContent = duration ? duration : '-';
-      summaryPrice.textContent = parsePrice() ? `$${parsePrice().toLocaleString('es-CO')}` : '-';
+      summaryPrice.textContent = price ? `$${price.toLocaleString('es-CO')}` : 'Consultar con barbero';
 
       const barbero = barberoEl.value;
       const dateVal = fechaEl.value;
+      
+      // ************************************
+      // ** LLAMADA A updateBarberoPhoto RESTAURADA **
+      // ************************************
+      updateBarberoPhoto(barbero);
 
       availableList.innerHTML = '';
       slotsBox.innerHTML = '';
@@ -406,10 +474,10 @@
 
     btnLimpiar.addEventListener('click', ()=>{ 
       document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; 
-      // document.getElementById('email').value=''; <-- ELIMINADO
       horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
-      summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='-';
+      summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='Consultar con barbero';
       document.getElementById('resumenCita').style.display = 'none';
+      updateBarberoPhoto(''); // Limpiar foto del barbero al limpiar formulario (Restaurado)
     });
 
     let submitting=false;
@@ -418,11 +486,19 @@
       const nombre = document.getElementById('nombre').value.trim();
       const apellido = document.getElementById('apellido').value.trim();
       const telefono = document.getElementById('telefono').value.trim();
-      // const email = document.getElementById('email').value.trim(); <-- ELIMINADO
+      // const email ELIMINADO
+
       const barbero = barberoEl.value;
       const servicio = servicioEl.value;
       const duration = parseDuration();
       const price = parsePrice();
+
+      // ************************************
+      // ** OBTENER TELÉFONO DEL BARBERO (Restaurado) **
+      // ************************************
+      const barberoData = BARBERS[barbero];
+      const barberoPhone = barberoData ? barberoData.phone : DEFAULT_CANCEL_PHONE;
+
       const dateVal = fechaEl.value;
       const startMinutes = Number(horaSelect.value);
 
@@ -430,7 +506,6 @@
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
 
       const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      // fecha pasada check desactivada
 
       const endMinutes = startMinutes + duration;
       if(endMinutes > CLOSE_MIN){ alert('La cita terminaría fuera del horario operativo.'); return; }
@@ -456,7 +531,7 @@
           current[key] = {
             nombre: `${nombre} ${apellido}`,
             telefono,
-            // email: email || '', <-- ELIMINADO
+            // email: email || '', ELIMINADO
             barbero,
             servicio,
             durationMinutes: duration,
@@ -470,12 +545,15 @@
         });
 
         const horaNice = minutesToAmPmWithSpace(startMinutes);
+        
+        // ************************************
+        // ** MENSAJE DE WHATSAPP AL NÚMERO DEL BARBERO (Ajustado) **
+        // ************************************
         const msg = 
 `💈 *NUEVA RESERVA* 💈
 
 👤 *Cliente:* ${nombre} ${apellido}
 📞 *Teléfono:* ${telefono}
-// ✉️ *Correo:* ${email || 'No registrado'} <-- ELIMINADO
 
 💇‍♂️ *Servicio:* ${servicio}
 ⏱ *Duración:* ${duration} min
@@ -487,7 +565,8 @@
 
 ✨ Gracias por agendar en *LA ZONA DEL BARBERO*. 
 Estamos listos para darte el mejor flow. 🙌`;
-        const phoneDest = '573233489369';
+        
+        const phoneDest = barberoPhone; // Usamos el teléfono del barbero
         window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(msg)}`, '_blank');
 
         // Show resumen and set whatsapp cancel link
@@ -497,7 +576,9 @@ Estamos listos para darte el mejor flow. 🙌`;
         document.getElementById('resFecha').textContent = dateVal;
         document.getElementById('resHora').textContent = minutesToShortAmPm(startMinutes);
         document.getElementById('resumenCita').style.display = 'block';
-        document.getElementById('whatsappBtn').href = 'https://wa.me/573233489369';
+        
+        // Enlace de cancelación al número del barbero (Restaurado)
+        whatsappCancelBtn.href = `https://wa.me/${barberoPhone}`; 
 
         alert('Cita guardada correctamente.');
         await refreshAvailability();
@@ -511,6 +592,8 @@ Estamos listos para darte el mejor flow. 🙌`;
     });
 
     // initial
+    setupBarberoSelect(); // Llamada restaurada
+    updateBarberoPhoto(barberoEl.value); // Llamada restaurada
     refreshAvailability();
 
     /* --- UI: Splash hide + Tabs behavior (NAME / SURNAME) --- */
