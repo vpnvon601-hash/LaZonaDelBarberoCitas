@@ -90,37 +90,9 @@
     }
     
     /* --- Barbero Photo CSS RESTAURADO --- */
-    .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease; cursor: pointer;}
+    .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease}
     .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(123,227,168,0.1)}
     .barbero-photo-container .info{font-size:14px; font-weight:700;}
-    
-    /* --- Nuevo: Modal para ampliar foto --- */
-    .photo-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      display: none; /* Inicialmente oculto, JS lo cambia a flex */
-      justify-content: center;
-      align-items: center;
-      z-index: 9990;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .photo-modal.active {
-      display: flex;
-      opacity: 1;
-    }
-    .photo-modal img {
-      max-width: 90%;
-      max-height: 90%;
-      border-radius: 12px;
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-      border: 4px solid var(--accent);
-    }
   </style>
 </head>
 <body>
@@ -139,8 +111,8 @@
       <div class="brand"><span class="logo">LB</span> LA ZONA DEL BARBERO — <span class="small" style="margin-left:8px">Agendamiento</span></div>
 
       <div class="card" id="mainCard">
-        <h3>Reservar cita</h3>
-        <p class="small">Complete los campos. Al confirmar se guardará en Firebase Realtime Database y se abrirá WhatsApp.</p>
+        <h3>✂️ Reservar cita</h3>
+        <p class="small">Complete los campos. Al confirmar se guardará en la base de datos y se abrirá WhatsApp. 📲</p>
 
         <div class="stepper" aria-hidden="false">
           <div class="step active">1</div>
@@ -152,17 +124,17 @@
           <div class="tab-panels" id="tabPanels">
             <div class="tab-panel">
               <label>Nombre *</label>
-              <input id="nombre" type="text" placeholder="Nombre" autocomplete="given-name" />
+              <input id="nombre" type="text" placeholder="Tu nombre" autocomplete="given-name" />
             </div>
             <div class="tab-panel">
               <label>Apellido *</label>
-              <input id="apellido" type="text" placeholder="Apellido" autocomplete="family-name" />
+              <input id="apellido" type="text" placeholder="Tu apellido" autocomplete="family-name" />
             </div>
           </div>
 
           <div class="tab-controls">
-            <button id="prevTab" type="button">Atrás</button>
-            <button id="nextTab" class="primary" type="button">Siguiente</button>
+            <button id="prevTab" type="button">⬅️ Atrás</button>
+            <button id="nextTab" class="primary" type="button">Siguiente ➡️</button>
           </div>
         </div>
 
@@ -180,27 +152,27 @@
           <img id="barberoImage" src="" alt="Foto del Barbero" style="display:none">
           <div class="info">Selecciona un barbero para ver su foto y contacto.</div>
         </div>
-        <label>Servicio * (<span class="price">precio en COP</span>)</label>
+        <label>Servicio * (<span class="price">duración</span>)</label>
         <select id="servicio">
           <option value="">Seleccionar...</option>
-          <option value="Corte" data-price="18000" data-duration="60">Corte de cabello — $18.000 — 1 h</option>
-          <option value="Corte + ceja" data-price="22000" data-duration="75">Corte + ceja — $22.000 — 1 h 15 min</option>
-          <option value="Corte + barba + ceja" data-price="25000" data-duration="100">Corte + barba + ceja — $25.000 — 1 h 40 min</option>
-          <option value="Corte + barba" data-price="23000" data-duration="85">Corte + barba — $23.000 — 1 h 25 min</option>
-          <option value="Corte VIP" data-price="70000" data-duration="150">Corte + Limpieza Facial (VIP) — $70.000 — 2 h 30 min</option>
+          <option value="Corte" data-price="18000" data-duration="60">Corte de cabello — 1 h</option>
+          <option value="Corte + ceja" data-price="22000" data-duration="75">Corte + ceja — 1 h 15 min</option>
+          <option value="Corte + barba + ceja" data-price="25000" data-duration="100">Corte + barba + ceja — 1 h 40 min</option>
+          <option value="Corte + barba" data-price="23000" data-duration="85">Corte + barba — 1 h 25 min</option>
+          <option value="Corte VIP" data-price="70000" data-duration="150">Corte + Limpieza Facial (VIP) — 2 h 30 min</option>
         </select>
 
-        <label>Fecha *</label>
+        <label>📅 Fecha *</label>
         <input id="fecha" type="date">
 
-        <label>Hora *</label>
+        <label>⏰ Hora *</label>
         <div id="availableList" class="available-list">Selecciona servicio (sugerencias). Luego elige barbero y fecha para disponibilidad real.</div>
         <div style="height:8px"></div>
         <select id="horaSelect"><option value="">Selecciona hora...</option></select>
 
         <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-          <button class="primary" id="btnGuardar">Confirmar y enviar WhatsApp</button>
-          <button id="btnLimpiar" type="button">Limpiar</button>
+          <button class="primary" id="btnGuardar">✅ Confirmar y enviar WhatsApp</button>
+          <button id="btnLimpiar" type="button">❌ Limpiar</button>
           <div id="status" style="margin-left:8px"></div>
         </div>
 
@@ -227,20 +199,17 @@
       </div>
 
     <div class="card summary-card">
-      <h4>Resumen</h4>
+      <h4>Detalles de tu Reserva</h4>
       <div class="small">Servicio: <strong id="summaryService">-</strong></div>
       <div class="small">Duración: <strong id="summaryDuration">-</strong> min</div>
       <div style="height:6px"></div>
       <div class="small">Precio: <strong id="summaryPrice">Consultar con barbero</strong></div>
       <div style="height:10px"></div>
-      <h4>Horas (vista)</h4>
+      <h4>Horas disponibles</h4>
       <div id="slotsBox" class="available-list small">Sin datos.</div>
     </div>
   </div>
 
-  <div id="photoModal" class="photo-modal">
-    <img id="modalImage" src="" alt="Foto Ampliada del Barbero">
-  </div>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, get, child, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -266,7 +235,7 @@
     // ** DATOS DE BARBEROS Y FOTO **
     // ************************************
     const BARBERS = {
-      "Dylan": { phone: "573233489369", image: "https://via.placeholder.com/200?text=Dilan" }, // URL Temporal. ¡Reemplazar!
+      "Dilan": { phone: "573233489369", image: "https://via.placeholder.com/200?text=Dilan" }, // URL Temporal. ¡Reemplazar!
       "Alejandro": { phone: "573219621581", image: "https://via.placeholder.com/200?text=Alejandro" }, // URL Temporal. ¡Reemplazar!
       "Leonardo": { phone: "573215676362", image: "20251205_130628.jpg" }, 
       "Santiago": { phone: "573022441609", image: "20251205_130541.jpg" } 
@@ -291,10 +260,6 @@
     const barberoImageEl = document.getElementById('barberoImage');
     const barberoInfoEl = barberoPhotoContainer.querySelector('.info');
     const whatsappCancelBtn = document.getElementById('whatsappBtn');
-    
-    // DOM DEL MODAL (NUEVO)
-    const photoModal = document.getElementById('photoModal');
-    const modalImage = document.getElementById('modalImage');
     
     function parseDuration(){ return Number(servicioEl.selectedOptions[0]?.dataset.duration) || 0; }
     function parsePrice(){ return Number(servicioEl.selectedOptions[0]?.dataset.price) || 0; }
@@ -404,7 +369,9 @@
       const price = parsePrice();
       summaryService.textContent = service || '-';
       summaryDuration.textContent = duration ? duration : '-';
-      summaryPrice.textContent = price ? `$${price.toLocaleString('es-CO')}` : 'Consultar con barbero';
+      // *** MODIFICADO: QUITAR PRECIO ***
+      summaryPrice.textContent = 'Consultar con barbero'; // Siempre mostrar esto
+      // *********************************
 
       const barbero = barberoEl.value;
       const dateVal = fechaEl.value;
@@ -426,19 +393,42 @@
 
       const candidates = generateCandidateStarts(duration);
 
+      // ***** NUEVA LÓGICA: Hora Actual *****
+      const now = new Date();
+      const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      // ************************************
+
       if(!barbero || !dateVal){
         availableList.innerHTML = 'Sugerencias (elige barbero y fecha para disponibilidad real):';
         candidates.forEach(s => {
+          // Si la fecha es hoy, y la hora de inicio (s) ya pasó, la deshabilitamos.
+          const isPast = dateVal === todayISO && s < nowMinutes; 
+
           const div = document.createElement('div');
-          div.className = 'slot';
-          div.textContent = `${minutesToShortAmPm(s)} — ${duration} min`;
-          div.onclick = () => {
-            horaSelect.value = s;
-            document.querySelectorAll('.slot').forEach(x=>{ x.classList.remove('selected'); x.style.background=''; x.style.color=''; });
-            div.classList.add('selected');
-          };
+          div.className = isPast ? 'slot busy' : 'slot'; // Usamos 'busy' para deshabilitarla visualmente
+          
+          let slotText = `${minutesToShortAmPm(s)} — ${duration} min`;
+          if (isPast) {
+             slotText = `${minutesToShortAmPm(s)} — Hora pasada ❌`;
+             div.onclick = () => alert('Esta hora ya no está disponible.'); // Deshabilita el click
+          } else {
+             div.onclick = () => {
+                horaSelect.value = s;
+                document.querySelectorAll('.slot').forEach(x=>{ x.classList.remove('selected'); x.style.background=''; x.style.color=''; });
+                div.classList.add('selected');
+             };
+          }
+          div.textContent = slotText;
           slotsBox.appendChild(div);
-          const opt = document.createElement('option'); opt.value = s; opt.textContent = minutesToShortAmPm(s); horaSelect.appendChild(opt);
+          
+          // Agregamos la hora al select, pero la deshabilitamos si ya pasó
+          const opt = document.createElement('option'); 
+          opt.value = s; 
+          opt.textContent = minutesToShortAmPm(s); 
+          opt.disabled = isPast;
+          if(isPast) opt.textContent += ' (Pasada)';
+          horaSelect.appendChild(opt);
         });
         return;
       }
@@ -457,6 +447,17 @@
 
           const div = document.createElement('div');
           div.className = 'slot';
+
+          // ***** VALIDACIÓN ADICIONAL PARA EL PASADO *****
+          const isPast = dateVal === todayISO && s < nowMinutes;
+          // ***********************************************
+
+          if(isPast){
+            div.classList.add('busy');
+            div.textContent = `${minutesToShortAmPm(s)} — Hora pasada ❌`;
+            slotsBox.appendChild(div);
+            continue;
+          }
 
           if(isConflict(s,e,occupied)){
             div.classList.add('busy');
@@ -526,7 +527,7 @@
       const barbero = barberoEl.value;
       const servicio = servicioEl.value;
       const duration = parseDuration();
-      const price = parsePrice();
+      const price = parsePrice(); // Se mantiene para guardado en DB
 
       // ************************************
       // ** OBTENER TELÉFONO DEL BARBERO (Restaurado) **
@@ -539,6 +540,18 @@
 
       if(!nombre||!apellido||!telefono||!barbero||!servicio||!dateVal||isNaN(startMinutes)){ alert('Completa todos los campos obligatorios.'); return; }
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
+      
+      // ***** VALIDACIÓN FINAL DE HORA ACTUAL (Por si acaso) *****
+      const now = new Date();
+      const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      if(dateVal === todayISO && startMinutes < nowMinutes){
+        alert('❌ ¡No puedes agendar citas en el pasado! Por favor, selecciona una hora posterior.');
+        return; 
+      }
+      // **********************************************************
+
 
       const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
@@ -582,24 +595,23 @@
         const horaNice = minutesToAmPmWithSpace(startMinutes);
         
         // ************************************
-        // ** MENSAJE DE WHATSAPP AL NÚMERO DEL BARBERO (Ajustado) **
+        // ** MENSAJE DE WHATSAPP AL NÚMERO DEL BARBERO **
         // ************************************
         const msg = 
-`💈 *NUEVA RESERVA* 💈
+`🤩 *¡NUEVA CITA AGENDADA!* 💈
 
 👤 *Cliente:* ${nombre} ${apellido}
 📞 *Teléfono:* ${telefono}
 
 💇‍♂️ *Servicio:* ${servicio}
-⏱ *Duración:* ${duration} min
-💲 *Precio:* $${price.toLocaleString('es-CO')}
+⏱️ *Duración:* ${duration} min
+💸 *Precio:* Por favor, consulte el precio del servicio con el barbero. (Precio puede variar)
 
 🧔‍♂️ *Barbero:* ${barbero}
 📅 *Fecha:* ${dateVal}
 ⏰ *Hora:* ${horaNice}
 
-✨ Gracias por agendar en *LA ZONA DEL BARBERO*. 
-Estamos listos para darte el mejor flow. 🙌`;
+¡Prepárate para el mejor *flow*! ✨`;
         
         const phoneDest = barberoPhone; // Usamos el teléfono del barbero
         window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(msg)}`, '_blank');
@@ -615,7 +627,7 @@ Estamos listos para darte el mejor flow. 🙌`;
         // Enlace de cancelación al número del barbero (Restaurado)
         whatsappCancelBtn.href = `https://wa.me/${barberoPhone}`; 
 
-        alert('Cita guardada correctamente.');
+        alert('Cita guardada correctamente y WhatsApp abierto.');
         await refreshAvailability();
       } catch(err){
         console.error('Transaction error:', err);
@@ -656,7 +668,7 @@ Estamos listos para darte el mejor flow. 🙌`;
       tabPanels.style.transform = `translateX(-${tabIndex * 100}%)`;
       steps.forEach((s,i)=> s.classList.toggle('active', i === tabIndex));
       prevTab.disabled = tabIndex === 0;
-      nextTab.textContent = tabIndex === 0 ? 'Siguiente' : 'Listo';
+      nextTab.textContent = tabIndex === 0 ? 'Siguiente ➡️' : 'Listo';
       // focus the visible input
       setTimeout(()=>{
         if(tabIndex===0) nombreInput.focus(); else apellidoInput.focus();
@@ -683,34 +695,6 @@ Estamos listos para darte el mejor flow. 🙌`;
     // initial tab state
     updateTabs();
 
-    // ************************************
-    // ** LÓGICA DE AMPLIACIÓN DE FOTO (NUEVA) **
-    // ************************************
-
-    // 1. Abrir modal al hacer clic en la foto pequeña
-    barberoImageEl.addEventListener('click', () => {
-      // Solo abre si la imagen está visible y tiene un src válido (no placeholder)
-      if (barberoImageEl.style.display === 'block' && !barberoImageEl.src.includes('placeholder')) {
-        modalImage.src = barberoImageEl.src;
-        modalImage.alt = `Foto Ampliada de ${barberoEl.value}`;
-        photoModal.style.display = 'flex'; // Asegura que el display esté configurado para la transición
-        // Pequeño timeout para forzar la actualización del DOM antes de aplicar la clase 'active'
-        setTimeout(() => { photoModal.classList.add('active'); }, 10); 
-      }
-    });
-
-    // 2. Cerrar modal al hacer clic en cualquier parte del modal
-    photoModal.addEventListener('click', () => {
-      photoModal.classList.remove('active');
-    });
-    
-    // 3. Control de display (para que la transición funcione correctamente)
-    photoModal.addEventListener('transitionend', () => {
-        if (!photoModal.classList.contains('active')) {
-            photoModal.style.display = 'none';
-        }
-    });
-    
   </script>
 </body>
 </html>
