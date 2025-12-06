@@ -20,15 +20,7 @@
     @media(max-width:980px){.wrap{grid-template-columns:1fr;padding:16px} }
 
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
-    /* CLASE LOGO MODIFICADA: AHORA 160px x 160px y CUADRADA */
-    .brand .logo{
-      width:160px; 
-      height:160px; 
-      border-radius:0; /* No circular */
-      object-fit:contain; /* Asegura que la imagen se ajuste */ 
-      border:none; /* Quitar borde */ 
-      display:inline-block; 
-    }
+    .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
 
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
@@ -61,9 +53,6 @@
     .res-box{background:linear-gradient(180deg, rgba(7,18,24,0.6), rgba(7,18,24,0.4));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);margin-top:12px}
 
     .cta{background:var(--good);color:#02100f;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block}
-
-    /* Right column */
-    .summary-card{position:sticky;top:36px}
 
     /* --- NEW: Splash Screen --- */
     .splash{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#03040a 0%, #071422 100%);z-index:9999}
@@ -116,9 +105,7 @@
 
   <div class="wrap">
     <div style="display:flex;flex-direction:column;gap:16px">
-      <div class="brand">
-        <img src="20251206_091028.png" alt="Logo de LA ZONA DEL BARBERO" class="logo" />
-      </div>
+      <div class="brand"><span class="logo">LB</span> LA ZONA DEL BARBERO — <span class="small" style="margin-left:8px">Agendamiento</span></div>
 
       <div class="card" id="mainCard">
         <h3>✂️ Reservar cita</h3>
@@ -166,9 +153,9 @@
         <select id="servicio">
           <option value="">Seleccionar...</option>
           <option value="Corte" data-price="18000" data-duration="60">Corte de cabello — 1 h</option>
-          <option value="Corte + ceja" data-price="22000" data-duration="75">Corte + ceja — 1 h 15 min</option>
-          <option value="Corte + barba + ceja" data-price="25000" data-duration="100">Corte + barba + ceja — 1 h 40 min</option>
-          <option value="Corte + barba" data-price="23000" data-duration="85">Corte + barba — 1 h 25 min</option>
+          <option value="Corte + ceja" data-price="22000" data-duration="60">Corte + ceja — 1 h</option>
+          <option value="Corte + barba + ceja" data-price="25000" data-duration="60">Corte + barba + ceja — 1 h</option>
+          <option value="Corte + barba" data-price="23000" data-duration="60">Corte + barba — 1 h</option>
           <option value="Corte VIP" data-price="70000" data-duration="150">Corte + Limpieza Facial (VIP) — 2 h 30 min</option>
         </select>
 
@@ -330,29 +317,6 @@
         barberoPhotoContainer.style.opacity = '0';
       }
     }
-    
-    // ************************************
-    // ** NUEVAS FUNCIONES PARA AUSENCIA **
-    // ************************************
-    function isDateBetween(checkISO, startISO, endISO){
-        // Compara fechas en formato ISO (YYYY-MM-DD)
-        return checkISO >= startISO && checkISO <= endISO;
-    }
-    
-    async function fetchUnavailableDates(barbero){
-        const path = `unavailableDates/${barbero}`;
-        const snap = await get(child(ref(db), path));
-        if(snap.exists()){
-            const data = snap.val();
-            // Convertir a un array de periodos para facilitar la comprobación
-            return Object.keys(data).map(startKey => ({
-                startDate: startKey,
-                endDate: data[startKey].endDate,
-                reason: data[startKey].reason || 'Ausencia programada'
-            }));
-        }
-        return [];
-    }
 
 
     async function fetchAppointmentsRT(barbero, dateISO){
@@ -388,8 +352,14 @@
 
     function generateCandidateStarts(duration){
       const out = [];
-      for(let t = OPEN_MIN; t + duration <= CLOSE_MIN; t += duration){
-        out.push(t);
+      // Dado que el usuario quiere slots de 1h, usamos 60 minutos como incremento
+      const slotIncrement = 60; 
+      for(let t = OPEN_MIN; t + slotIncrement <= CLOSE_MIN; t += slotIncrement){
+        // Solo incluimos el slot si su duración + el servicio (si es más largo) cabe
+        // Aunque el servicio sea de 60min, el VIP es de 150. Debemos validar que el servicio quepa.
+        if (t + duration <= CLOSE_MIN) { 
+             out.push(t);
+        }
       }
       return out;
     }
@@ -402,11 +372,16 @@
       const price = parsePrice();
       summaryService.textContent = service || '-';
       summaryDuration.textContent = duration ? duration : '-';
-      summaryPrice.textContent = 'Consultar con barbero'; 
+      // *** MODIFICADO: QUITAR PRECIO ***
+      summaryPrice.textContent = 'Consultar con barbero'; // Siempre mostrar esto
+      // *********************************
 
       const barbero = barberoEl.value;
       const dateVal = fechaEl.value;
       
+      // ************************************
+      // ** LLAMADA A updateBarberoPhoto RESTAURADA **
+      // ************************************
       updateBarberoPhoto(barbero);
 
       availableList.innerHTML = '';
@@ -419,6 +394,7 @@
         return;
       }
 
+      // Los candidatos se generan ahora en incrementos de 60 minutos
       const candidates = generateCandidateStarts(duration);
 
       // ***** NUEVA LÓGICA: Hora Actual *****
@@ -430,14 +406,16 @@
       if(!barbero || !dateVal){
         availableList.innerHTML = 'Sugerencias (elige barbero y fecha para disponibilidad real):';
         candidates.forEach(s => {
+          // Si la fecha es hoy, y la hora de inicio (s) ya pasó, la deshabilitamos.
           const isPast = dateVal === todayISO && s < nowMinutes; 
+
           const div = document.createElement('div');
-          div.className = isPast ? 'slot busy' : 'slot';
+          div.className = isPast ? 'slot busy' : 'slot'; // Usamos 'busy' para deshabilitarla visualmente
           
           let slotText = `${minutesToShortAmPm(s)} — ${duration} min`;
           if (isPast) {
              slotText = `${minutesToShortAmPm(s)} — Hora pasada ❌`;
-             div.onclick = () => alert('Esta hora ya no está disponible.'); 
+             div.onclick = () => alert('Esta hora ya no está disponible.'); // Deshabilita el click
           } else {
              div.onclick = () => {
                 horaSelect.value = s;
@@ -448,6 +426,7 @@
           div.textContent = slotText;
           slotsBox.appendChild(div);
           
+          // Agregamos la hora al select, pero la deshabilitamos si ya pasó
           const opt = document.createElement('option'); 
           opt.value = s; 
           opt.textContent = minutesToShortAmPm(s); 
@@ -457,29 +436,6 @@
         });
         return;
       }
-      
-      // ************************************
-      // ** VERIFICAR AUSENCIA DEL BARBERO **
-      // ************************************
-      const unavailablePeriods = await fetchUnavailableDates(barbero);
-      let isBarberUnavailable = false;
-      let reason = '';
-
-      for (const period of unavailablePeriods) {
-          if (isDateBetween(dateVal, period.startDate, period.endDate)) {
-              isBarberUnavailable = true;
-              reason = `Razón: ${period.reason}. Vuelve a estar disponible el ${period.endDate}.`;
-              break;
-          }
-      }
-
-      if(isBarberUnavailable){
-          availableList.innerHTML = `<div style="color:var(--danger);font-weight:700;">🚫 ${barbero} está no disponible el ${dateVal}.</div>`;
-          slotsBox.innerHTML = `<div class="small">${reason}</div>`;
-          horaSelect.innerHTML = '<option value="">Barbero no disponible</option>';
-          return; // Salir si el barbero está de ausencia
-      }
-      // ************************************
 
       availableList.innerHTML = '<div class="small">Cargando disponibilidad... <span class="loader"></span></div>';
       try{
@@ -496,7 +452,12 @@
           const div = document.createElement('div');
           div.className = 'slot';
 
+          // ***** VALIDACIÓN ADICIONAL PARA EL PASADO *****
+          const now = new Date();
+          const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
           const isPast = dateVal === todayISO && s < nowMinutes;
+          // ***********************************************
 
           if(isPast){
             div.classList.add('busy');
@@ -568,12 +529,16 @@
       const nombre = document.getElementById('nombre').value.trim();
       const apellido = document.getElementById('apellido').value.trim();
       const telefono = document.getElementById('telefono').value.trim();
+      // const email ELIMINADO
 
       const barbero = barberoEl.value;
       const servicio = servicioEl.value;
       const duration = parseDuration();
-      const price = parsePrice(); 
+      const price = parsePrice(); // Se mantiene para guardado en DB
 
+      // ************************************
+      // ** OBTENER TELÉFONO DEL BARBERO (Restaurado) **
+      // ************************************
       const barberoData = BARBERS[barbero];
       const barberoPhone = barberoData ? barberoData.phone : DEFAULT_CANCEL_PHONE;
 
@@ -582,16 +547,6 @@
 
       if(!nombre||!apellido||!telefono||!barbero||!servicio||!dateVal||isNaN(startMinutes)){ alert('Completa todos los campos obligatorios.'); return; }
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
-      
-      // ***** VALIDACIÓN DE AUSENCIA FINAL *****
-      const unavailablePeriods = await fetchUnavailableDates(barbero);
-      for (const period of unavailablePeriods) {
-          if (isDateBetween(dateVal, period.startDate, period.endDate)) {
-              alert(`❌ ${barbero} está de ausencia el ${dateVal} por la razón: ${period.reason}. Por favor, selecciona otra fecha.`);
-              return; 
-          }
-      }
-      // ***************************************
       
       // ***** VALIDACIÓN FINAL DE HORA ACTUAL (Por si acaso) *****
       const now = new Date();
@@ -631,6 +586,7 @@
           current[key] = {
             nombre: `${nombre} ${apellido}`,
             telefono,
+            // email: email || '', ELIMINADO
             barbero,
             servicio,
             durationMinutes: duration,
@@ -690,8 +646,8 @@
     });
 
     // initial
-    setupBarberoSelect(); 
-    updateBarberoPhoto(barberoEl.value); 
+    setupBarberoSelect(); // Llamada restaurada
+    updateBarberoPhoto(barberoEl.value); // Llamada restaurada
     refreshAvailability();
 
     /* --- UI: Splash hide + Tabs behavior (NAME / SURNAME) --- */
