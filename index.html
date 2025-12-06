@@ -20,7 +20,8 @@
     @media(max-width:980px){.wrap{grid-template-columns:1fr;padding:16px} }
 
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
-    .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
+    /* CLASE LOGO MODIFICADA PARA ACEPTAR IMAGEN */
+    .brand .logo{width:36px;height:36px;border-radius:50%;object-fit:cover; /* Asegura que la imagen se ajuste y se recorte al círculo */ border:2px solid var(--accent); /* Borde para que se vea más destacado */ display:inline-block; /* Cambiado a inline-block para la imagen */}
 
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
@@ -108,7 +109,9 @@
 
   <div class="wrap">
     <div style="display:flex;flex-direction:column;gap:16px">
-      <div class="brand"><span class="logo">LB</span> LA ZONA DEL BARBERO — <span class="small" style="margin-left:8px">Agendamiento</span></div>
+      <div class="brand">
+        <img src="20251206_085929.png" alt="Logo de LA ZONA DEL BARBERO" class="logo" />
+      </div>
 
       <div class="card" id="mainCard">
         <h3>✂️ Reservar cita</h3>
