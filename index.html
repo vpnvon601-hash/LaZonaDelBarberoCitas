@@ -21,8 +21,14 @@
 
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
     /* CLASE LOGO MODIFICADA PARA ACEPTAR IMAGEN */
-    .brand .logo{width:36px;height:36px;border-radius:50%;object-fit:cover; /* Asegura que la imagen se ajuste y se recorte al círculo */ border:2px solid var(--accent); /* Borde para que se vea más destacado */ display:inline-block; /* Cambiado a inline-block para la imagen */}
-
+    .brand .logo{
+      width:80px; 
+      height:80px; 
+      border-radius:0; /* No circular */
+      object-fit:contain; /* Asegura que la imagen se ajuste */ 
+      border:none; /* Quitar borde */ 
+      display:inline-block; 
+    }
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
     h3,h4{margin:0 0 12px 0;font-weight:700}
