@@ -5,21 +5,34 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LA ZONA DEL BARBERO — Agendamiento</title>
   <style>
+    /* ------------------------------------------- */
+    /* --- PALETA DE COLORES (GRISES Y BLANCOS) -- */
+    /* ------------------------------------------- */
     :root{
-      --bg:#06070a; --card:#0e1115; --muted:#9aa0a6; --line:#1e252b;
-      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03);
-      --danger:#ef6b6b; --good:#35d19b;
+      --bg:#06070a; 
+      --card:#0e1115; 
+      --muted:#9aa0a6; 
+      --line:#1e252b;
+      --text:#e6eef3; 
+      /* Colores reemplazados */
+      --accent:#949DAA; /* Gris claro/azulado (era dorado) */
+      --accent-2:#4A5568; /* Gris medio/oscuro (era verde) */
+      --glass:rgba(255,255,255,0.03);
+      --danger:#ef6b6b; 
+      --good:#4A5568; /* Usamos Gris medio/oscuro (era verde/good) */
       --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#030304 0%,#071018 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+    /* Fondo con gradiente más oscuro y neutro */
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#030304 0%,#050c13 100%);color:var(--text);-webkit-font-smoothing:antialiased}
 
     /* Layout */
     .wrap{max-width:1100px;margin:36px auto;padding:22px;display:grid;grid-template-columns:1fr 380px;gap:22px}
     @media(max-width:980px){.wrap{grid-template-columns:1fr;padding:16px} }
 
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
+    /* El logo usa el nuevo --accent/--accent-2 */
     .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
 
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
@@ -33,7 +46,8 @@
 
     .row{display:flex;gap:10px}
 
-    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(123,227,168,0.06)}
+    /* Botón Primary con nuevos colores */
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(74,85,104,0.06)}
     button{background:transparent;color:var(--text);border:1px solid var(--line);padding:10px 12px;border-radius:10px;cursor:pointer}
 
     .meta{font-size:12px;color:var(--muted);margin-top:8px}
@@ -43,6 +57,7 @@
     .slot{padding:10px;border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid transparent;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);color:var(--text);display:flex;justify-content:space-between;align-items:center}
     .slot:hover{transform:translateY(-3px);transition:all .18s ease;background:rgba(255,255,255,0.02)}
     .slot.busy{background:transparent;color:var(--danger);opacity:0.95;cursor:not-allowed;border:1px solid rgba(239,107,107,0.06)}
+    /* Slot seleccionado con nuevos colores */
     .slot.selected{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;font-weight:800}
 
     .loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin .9s linear infinite}
@@ -52,14 +67,16 @@
 
     .res-box{background:linear-gradient(180deg, rgba(7,18,24,0.6), rgba(7,18,24,0.4));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);margin-top:12px}
 
-    .cta{background:var(--good);color:#02100f;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block}
+    /* Botón CTA con nuevos colores */
+    .cta{background:var(--good);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block}
 
     /* --- NEW: Splash Screen --- */
     .splash{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#03040a 0%, #071422 100%);z-index:9999}
     .splash .inner{display:grid;place-items:center;gap:14px;padding:22px;text-align:center}
     .splash .ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), transparent);box-shadow:0 8px 40px rgba(0,0,0,0.6);border:6px solid rgba(255,255,255,0.03);position:relative}
     .splash .ring:before{content:'';position:absolute;inset:6px;border-radius:50%;border:6px solid rgba(255,255,255,0.02)}
-    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(123,227,168,0.14);animation:orbit 1.6s linear infinite}
+    /* Dot de la animación con nuevos colores */
+    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(74,85,104,0.14);animation:orbit 1.6s linear infinite}
     @keyframes orbit{0%{transform:translateX(-36px) rotate(0) }50%{transform:translateX(36px) rotate(180deg)}100%{transform:translateX(-36px) rotate(360deg)}}
     .splash h2{font-size:18px;letter-spacing:1px;margin:6px 0 0 0}
     .splash p{margin:0;font-size:13px;color:var(--muted)}
@@ -67,6 +84,7 @@
     /* --- NEW: Stepper / Tabs for nombre & apellido --- */
     .stepper{display:flex;gap:10px;align-items:center;margin-bottom:14px}
     .step{width:40px;height:40px;border-radius:10px;background:var(--glass);display:grid;place-items:center;border:1px solid var(--line);font-weight:700}
+    /* Step activo con nuevos colores */
     .step.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018}
 
     .tabs{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:14px}
@@ -74,8 +92,8 @@
     .tab-panel{min-width:100%;padding:6px}
     .tab-controls{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 
-    /* focus styles */
-    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(123,227,168,0.06);border-color:rgba(123,227,168,0.12)}
+    /* focus styles con nuevos colores */
+    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(74,85,104,0.06);border-color:rgba(74,85,104,0.12)}
 
     /* tiny helpers */
     .muted{color:var(--muted)}
@@ -88,7 +106,8 @@
     
     /* --- Barbero Photo CSS RESTAURADO --- */
     .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease}
-    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(123,227,168,0.1)}
+    /* Borde de la foto con nuevo color */
+    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(74,85,104,0.1)}
     .barbero-photo-container .info{font-size:14px; font-weight:700;}
   </style>
 </head>
@@ -225,8 +244,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const OPEN_MIN = 10 * 60;
-    const CLOSE_MIN = 21 * 60;
+    // ************************************
+    // ** HORARIO MODIFICADO: 10:00 AM (600 minutos) **
+    // ************************************
+    const OPEN_MIN = 10 * 60; // 600 minutos = 10:00 AM
+    const CLOSE_MIN = 21 * 60; // 1260 minutos = 9:00 PM
     
     // ************************************
     // ** DATOS DE BARBEROS Y FOTO **
@@ -354,9 +376,11 @@
       const out = [];
       // Dado que el usuario quiere slots de 1h, usamos 60 minutos como incremento
       const slotIncrement = 60; 
+      // ************************************
+      // ** MODIFICADO: Empieza en OPEN_MIN (10:00 AM) **
+      // ************************************
       for(let t = OPEN_MIN; t + slotIncrement <= CLOSE_MIN; t += slotIncrement){
         // Solo incluimos el slot si su duración + el servicio (si es más largo) cabe
-        // Aunque el servicio sea de 60min, el VIP es de 150. Debemos validar que el servicio quepa.
         if (t + duration <= CLOSE_MIN) { 
              out.push(t);
         }
@@ -537,7 +561,8 @@
       const price = parsePrice(); // Se mantiene para guardado en DB
 
       // ************************************
-      // ** OBTENER TELÉFONO DEL BARBERO (Restaurado) **
+      // ** OBTENER TELÉFONO DEL BARBERO **
+      // ** (Usado para enviar WhatsApp de notificación) **
       // ************************************
       const barberoData = BARBERS[barbero];
       const barberoPhone = barberoData ? barberoData.phone : DEFAULT_CANCEL_PHONE;
@@ -563,7 +588,7 @@
       const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
       const endMinutes = startMinutes + duration;
-      if(endMinutes > CLOSE_MIN){ alert('La cita terminaría fuera del horario operativo.'); return; }
+      if(endMinutes > CLOSE_MIN){ alert('La cita terminaría fuera del horario operativo (máx 9:00pm).'); return; }
 
       submitting=true; btnGuardar.disabled=true; status.innerHTML='<span class="loader"></span>';
 
@@ -602,7 +627,7 @@
         const horaNice = minutesToAmPmWithSpace(startMinutes);
         
         // ************************************
-        // ** MENSAJE DE WHATSAPP AL NÚMERO DEL BARBERO **
+        // ** MENSAJE DE WHATSAPP AL BARBERO (IMPLEMENTADO) **
         // ************************************
         const msg = 
 `🤩 *¡NUEVA CITA AGENDADA!* 💈
