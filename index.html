@@ -70,18 +70,7 @@
     /* Botón CTA con nuevos colores */
     .cta{background:var(--good);color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block}
 
-    /* --- NEW: Splash Screen --- */
-    .splash{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#03040a 0%, #071422 100%);z-index:9999}
-    .splash .inner{display:grid;place-items:center;gap:14px;padding:22px;text-align:center}
-    .splash .ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), transparent);box-shadow:0 8px 40px rgba(0,0,0,0.6);border:6px solid rgba(255,255,255,0.03);position:relative}
-    .splash .ring:before{content:'';position:absolute;inset:6px;border-radius:50%;border:6px solid rgba(255,255,255,0.02)}
-    /* Dot de la animación con nuevos colores */
-    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(74,85,104,0.14);animation:orbit 1.6s linear infinite}
-    @keyframes orbit{0%{transform:translateX(-36px) rotate(0) }50%{transform:translateX(36px) rotate(180deg)}100%{transform:translateX(-36px) rotate(360deg)}}
-    .splash h2{font-size:18px;letter-spacing:1px;margin:6px 0 0 0}
-    .splash p{margin:0;font-size:13px;color:var(--muted)}
-
-    /* --- NEW: Stepper / Tabs for nombre & apellido --- */
+    /* --- Stepper / Tabs for nombre & apellido --- */
     .stepper{display:flex;gap:10px;align-items:center;margin-bottom:14px}
     .step{width:40px;height:40px;border-radius:10px;background:var(--glass);display:grid;place-items:center;border:1px solid var(--line);font-weight:700}
     /* Step activo con nuevos colores */
@@ -101,10 +90,9 @@
     /* responsive tweaks */
     @media(max-width:680px){
       .wrap{grid-template-columns:1fr;padding:14px}
-      .splash .ring{width:96px;height:96px}
     }
     
-    /* --- Barbero Photo CSS RESTAURADO --- */
+    /* --- Barbero Photo CSS --- */
     .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease}
     /* Borde de la foto con nuevo color */
     .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(74,85,104,0.1)}
@@ -112,15 +100,6 @@
   </style>
 </head>
 <body>
-
-  <div id="splash" class="splash" aria-hidden="false">
-    <div class="inner" role="status">
-      <div class="ring" aria-hidden="true"><div class="dot"></div></div>
-      <h2>Agenda Citas</h2>
-      <p style="font-weight:800;letter-spacing:1px">LA ZONA DEL BARBERO</p>
-      <p class="muted">Cargando — preparando tu experiencia en modo noche</p>
-    </div>
-  </div>
 
   <div class="wrap">
     <div style="display:flex;flex-direction:column;gap:16px">
@@ -245,7 +224,7 @@
     const db = getDatabase(app);
 
     // ************************************
-    // ** HORARIO MODIFICADO: 7:00 AM a 10:00 PM **
+    // ** HORARIO: 7:00 AM a 10:00 PM **
     // ************************************
     const OPEN_MIN = 7 * 60; // 420 minutos = 7:00 AM
     const CLOSE_MIN = 22 * 60; // 1320 minutos = 10:00 PM
@@ -274,7 +253,6 @@
     const btnGuardar = document.getElementById('btnGuardar');
     const btnLimpiar = document.getElementById('btnLimpiar');
     const status = document.getElementById('status');
-    // NUEVOS DOM (Restaurados)
     const barberoPhotoContainer = document.getElementById('barberoPhoto');
     const barberoImageEl = document.getElementById('barberoImage');
     const barberoInfoEl = barberoPhotoContainer.querySelector('.info');
@@ -301,9 +279,7 @@
 
     (function setMinDate(){ const t=new Date(); const y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,'0'), d=String(t.getDate()).padStart(2,'0'); fechaEl.min = `${y}-${m}-${d}`; })();
     
-    // ************************************
-    // ** Llenar el SELECT de Barbero (Restaurado) **
-    // ************************************
+    // Llenar el SELECT de Barbero
     function setupBarberoSelect(){
       barberoEl.innerHTML = '<option value="">Seleccionar...</option>';
       for(const name in BARBERS){
@@ -314,9 +290,7 @@
       }
     }
 
-    // ************************************
-    // ** Actualizar foto del barbero (Restaurado) **
-    // ************************************
+    // Actualizar foto del barbero
     function updateBarberoPhoto(barberoName){
       const data = BARBERS[barberoName];
       if(data && data.image){
@@ -326,7 +300,6 @@
         barberoInfoEl.textContent = `Barbero: ${barberoName} | WhatsApp: +${data.phone}`;
         barberoPhotoContainer.style.opacity = '1';
       } else if (barberoName) {
-        // En caso de que no tenga URL (solo si el nombre existe pero no la imagen)
         barberoImageEl.style.display = 'none';
         barberoImageEl.src = '';
         const phone = data ? '+' + data.phone : 'No disponible';
@@ -374,9 +347,9 @@
 
     function generateCandidateStarts(duration){
       const out = [];
-      // Dado que el usuario quiere slots de 1h, usamos 60 minutos como incremento
+      // Usamos 60 minutos como incremento (slots de 1h)
       const slotIncrement = 60; 
-      // Empieza en OPEN_MIN (7:00 AM)
+      // Empieza en OPEN_MIN (7:00 AM) y termina cuando el siguiente slot exceda CLOSE_MIN
       for(let t = OPEN_MIN; t + slotIncrement <= CLOSE_MIN; t += slotIncrement){
         // Solo incluimos el slot si su duración + el servicio (si es más largo) cabe
         if (t + duration <= CLOSE_MIN) { 
@@ -394,16 +367,11 @@
       const price = parsePrice();
       summaryService.textContent = service || '-';
       summaryDuration.textContent = duration ? duration : '-';
-      // *** MODIFICADO: QUITAR PRECIO ***
-      summaryPrice.textContent = 'Consultar con barbero'; // Siempre mostrar esto
-      // *********************************
+      summaryPrice.textContent = 'Consultar con barbero'; 
 
       const barbero = barberoEl.value;
       const dateVal = fechaEl.value;
       
-      // ************************************
-      // ** LLAMADA A updateBarberoPhoto RESTAURADA **
-      // ************************************
       updateBarberoPhoto(barbero);
 
       availableList.innerHTML = '';
@@ -416,28 +384,24 @@
         return;
       }
 
-      // Los candidatos se generan ahora en incrementos de 60 minutos
       const candidates = generateCandidateStarts(duration);
 
-      // ***** NUEVA LÓGICA: Hora Actual *****
       const now = new Date();
       const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      // ************************************
 
       if(!barbero || !dateVal){
         availableList.innerHTML = 'Sugerencias (elige barbero y fecha para disponibilidad real):';
         candidates.forEach(s => {
-          // Si la fecha es hoy, y la hora de inicio (s) ya pasó, la deshabilitamos.
           const isPast = dateVal === todayISO && s < nowMinutes; 
 
           const div = document.createElement('div');
-          div.className = isPast ? 'slot busy' : 'slot'; // Usamos 'busy' para deshabilitarla visualmente
+          div.className = isPast ? 'slot busy' : 'slot';
           
           let slotText = `${minutesToShortAmPm(s)} — ${duration} min`;
           if (isPast) {
              slotText = `${minutesToShortAmPm(s)} — Hora pasada ❌`;
-             div.onclick = () => alert('Esta hora ya no está disponible.'); // Deshabilita el click
+             div.onclick = () => alert('Esta hora ya no está disponible.');
           } else {
              div.onclick = () => {
                 horaSelect.value = s;
@@ -448,7 +412,6 @@
           div.textContent = slotText;
           slotsBox.appendChild(div);
           
-          // Agregamos la hora al select, pero la deshabilitamos si ya pasó
           const opt = document.createElement('option'); 
           opt.value = s; 
           opt.textContent = minutesToShortAmPm(s); 
@@ -469,18 +432,16 @@
         let anyAvailable = false;
         for(const s of candidates){
           const e = s + duration;
-          // La hora de cierre ahora es 10:00 PM
+          // Validar que la cita termine dentro del horario (10:00 PM)
           if(e > CLOSE_MIN) continue;
 
           const div = document.createElement('div');
           div.className = 'slot';
 
-          // ***** VALIDACIÓN ADICIONAL PARA EL PASADO *****
           const now = new Date();
           const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
           const nowMinutes = now.getHours() * 60 + now.getMinutes();
           const isPast = dateVal === todayISO && s < nowMinutes;
-          // ***********************************************
 
           if(isPast){
             div.classList.add('busy');
@@ -543,7 +504,7 @@
       horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
       summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='Consultar con barbero';
       document.getElementById('resumenCita').style.display = 'none';
-      updateBarberoPhoto(''); // Limpiar foto del barbero al limpiar formulario (Restaurado)
+      updateBarberoPhoto('');
     });
 
     let submitting=false;
@@ -552,17 +513,12 @@
       const nombre = document.getElementById('nombre').value.trim();
       const apellido = document.getElementById('apellido').value.trim();
       const telefono = document.getElementById('telefono').value.trim();
-      // const email ELIMINADO
 
       const barbero = barberoEl.value;
       const servicio = servicioEl.value;
       const duration = parseDuration();
-      const price = parsePrice(); // Se mantiene para guardado en DB
+      const price = parsePrice();
 
-      // ************************************
-      // ** OBTENER TELÉFONO DEL BARBERO **
-      // ** (Usado para enviar WhatsApp de notificación) **
-      // ************************************
       const barberoData = BARBERS[barbero];
       const barberoPhone = barberoData ? barberoData.phone : DEFAULT_CANCEL_PHONE;
 
@@ -572,7 +528,7 @@
       if(!nombre||!apellido||!telefono||!barbero||!servicio||!dateVal||isNaN(startMinutes)){ alert('Completa todos los campos obligatorios.'); return; }
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
       
-      // ***** VALIDACIÓN FINAL DE HORA ACTUAL (Por si acaso) *****
+      // VALIDACIÓN FINAL DE HORA ACTUAL
       const now = new Date();
       const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -581,10 +537,6 @@
         alert('❌ ¡No puedes agendar citas en el pasado! Por favor, selecciona una hora posterior.');
         return; 
       }
-      // **********************************************************
-
-
-      const today = new Date(); const [y,m,d] = dateVal.split('-').map(x=>parseInt(x,10)); const apptDate = new Date(y,m-1,d); const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
       const endMinutes = startMinutes + duration;
       // VALIDACIÓN FINAL: 10:00 PM
@@ -611,7 +563,6 @@
           current[key] = {
             nombre: `${nombre} ${apellido}`,
             telefono,
-            // email: email || '', ELIMINADO
             barbero,
             servicio,
             durationMinutes: duration,
@@ -626,9 +577,7 @@
 
         const horaNice = minutesToAmPmWithSpace(startMinutes);
         
-        // ************************************
-        // ** MENSAJE DE WHATSAPP AL BARBERO **
-        // ************************************
+        // MENSAJE DE WHATSAPP AL BARBERO
         const msg = 
 `🤩 *¡NUEVA CITA AGENDADA!* 💈
 
@@ -645,7 +594,7 @@
 
 ¡Prepárate para el mejor *flow*! ✨`;
         
-        const phoneDest = barberoPhone; // Usamos el teléfono del barbero
+        const phoneDest = barberoPhone;
         window.open(`https://api.whatsapp.com/send?phone=${phoneDest}&text=${encodeURIComponent(msg)}`, '_blank');
 
         // Show resumen and set whatsapp cancel link
@@ -656,7 +605,6 @@
         document.getElementById('resHora').textContent = minutesToShortAmPm(startMinutes);
         document.getElementById('resumenCita').style.display = 'block';
         
-        // Enlace de cancelación al número del barbero (Restaurado)
         whatsappCancelBtn.href = `https://wa.me/${barberoPhone}`; 
 
         alert('Cita guardada correctamente y WhatsApp abierto.');
@@ -670,26 +618,10 @@
       }
     });
 
-    // initial
-    setupBarberoSelect(); // Llamada restaurada
-    updateBarberoPhoto(barberoEl.value); // Llamada restaurada
+    // initial setup
+    setupBarberoSelect();
+    updateBarberoPhoto(barberoEl.value);
     refreshAvailability();
-
-    /* --- UI: Splash hide + Tabs behavior (NAME / SURNAME) --- */
-    const splash = document.getElementById('splash');
-    // ************************************************
-    // ** MODIFICACIÓN CLAVE: Ocultar el Splash Screen **
-    // ************************************************
-    window.addEventListener('load', ()=>{
-      // Hides after 100ms delay. Total transition is fast.
-      setTimeout(()=>{
-        splash.style.transition='opacity .4s ease, transform .4s ease';
-        splash.style.opacity='0';
-        splash.style.transform='scale(.98)';
-        // Ensures the element is removed from layout after transition completes
-        setTimeout(()=>{ splash.style.display = 'none'; }, 400); 
-      }, 100); 
-    });
 
     // Tabs
     const tabPanels = document.getElementById('tabPanels');
@@ -719,4 +651,18 @@
         tabIndex = 1; updateTabs();
       } else {
         // finish -> focus next logical field (telefono)
-        if(!apellidoInput.value.trim()){ apellidoInput.animate([{transform:'translateX(-6
+        if(!apellidoInput.value.trim()){ apellidoInput.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:180}); apellidoInput.focus(); return; }
+        document.getElementById('telefono').focus();
+      }
+    });
+
+    // allow Enter to move forward
+    nombreInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); nextTab.click(); } });
+    apellidoInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); nextTab.click(); } });
+
+    // initial tab state
+    updateTabs();
+
+  </script>
+</body>
+</html>
