@@ -7,8 +7,12 @@
   <style>
     :root{
       --bg:#06070a; --card:#0e1115; --muted:#9aa0a6; --line:#1e252b;
-      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03);
-      --danger:#ef6b6b; --good:#35d19b;
+      --text:#e6eef3; 
+      --accent:#d0d7de; /* MODIFICADO: Antes amarillo/dorado */
+      --accent-2:#aeb5bc; /* MODIFICADO: Antes verde */
+      --glass:rgba(255,255,255,0.03);
+      --danger:#ef6b6b;
+      --good:#e6eef3; /* MODIFICADO: Antes verde */
       --radius:14px;
     }
     *{box-sizing:border-box}
@@ -25,8 +29,8 @@
       background-image: url('20251206_091028.png'); /* URL del logo */
       background-repeat: no-repeat;
       background-position: center center;
-      background-size: 400px; /* AUMENTADO: Mayor tamaño para mejor visibilidad */
-      opacity: 0.10; /* AUMENTADO: Mayor opacidad para hacerlo más visible */
+      background-size: 400px; 
+      opacity: 0.10; 
       pointer-events: none;
       z-index: -1;
     }
@@ -50,7 +54,8 @@
 
     .row{display:flex;gap:10px}
 
-    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(123,227,168,0.06)}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(208,215,222,0.06)}
     button{background:transparent;color:var(--text);border:1px solid var(--line);padding:10px 12px;border-radius:10px;cursor:pointer}
 
     .meta{font-size:12px;color:var(--muted);margin-top:8px}
@@ -79,7 +84,8 @@
     .splash .inner{display:grid;place-items:center;gap:14px;padding:22px;text-align:center}
     .splash .ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), transparent);box-shadow:0 8px 40px rgba(0,0,0,0.6);border:6px solid rgba(255,255,255,0.03);position:relative}
     .splash .ring:before{content:'';position:absolute;inset:6px;border-radius:50%;border:6px solid rgba(255,255,255,0.02)}
-    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(123,227,168,0.14);animation:orbit 1.6s linear infinite}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(208,215,222,0.14);animation:orbit 1.6s linear infinite}
     @keyframes orbit{0%{transform:translateX(-36px) rotate(0) }50%{transform:translateX(36px) rotate(180deg)}100%{transform:translateX(-36px) rotate(360deg)}}
     .splash h2{font-size:18px;letter-spacing:1px;margin:6px 0 0 0}
     .splash p{margin:0;font-size:13px;color:var(--muted)}
@@ -94,8 +100,8 @@
     .tab-panel{min-width:100%;padding:6px}
     .tab-controls{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 
-    /* focus styles */
-    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(123,227,168,0.06);border-color:rgba(123,227,168,0.12)}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(208,215,222,0.12);border-color:rgba(208,215,222,0.2)}
 
     /* tiny helpers */
     .muted{color:var(--muted)}
@@ -108,7 +114,8 @@
     
     /* --- NEW: Barbero Photo CSS --- */
     .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease}
-    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(123,227,168,0.1)}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(208,215,222,0.1)}
     .barbero-photo-container .info{font-size:14px; font-weight:700;}
   </style>
 </head>
