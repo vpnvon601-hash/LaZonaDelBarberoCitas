@@ -7,13 +7,14 @@
   <style>
     :root{
       --bg:#06070a; --card:#0e1115; --muted:#9aa0a6; --line:#1e252b;
-      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03);
+      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03); /* Mantener la opacidad baja para el efecto semi-transparente */
       --danger:#ef6b6b; --good:#35d19b;
       --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#030304 0%,#071018 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+    /* --- MODIFICADO: Fondo negro sólido --- */
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#000000 0%,#000000 100%);color:var(--text);-webkit-font-smoothing:antialiased}
 
     /* Layout */
     .wrap{max-width:1100px;margin:36px auto;padding:22px;display:grid;grid-template-columns:1fr 380px;gap:22px}
@@ -22,7 +23,8 @@
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
     .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
 
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+    /* --- MODIFICADO: El fondo del 'card' usa la variable semi-transparente --glass --- */
+    .card{background:var(--glass);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
     h3,h4{margin:0 0 12px 0;font-weight:700}
     .small{font-size:13px;color:var(--muted)}
@@ -104,6 +106,10 @@
       <p style="font-weight:800;letter-spacing:1px">LA ZONA DEL BARBERO</p>
       <p class="muted">Cargando — preparando tu experiencia en modo noche</p>
     </div>
+  </div>
+
+  <div class="logo-header" style="text-align:center; padding: 20px 0;">
+    <img 20251206_091028.png" alt="Logotipo LA ZONA DEL BARBERO" style="max-width: 150px; height: auto; border-radius: 5px; opacity: 0.95;">
   </div>
 
   <div class="wrap">
