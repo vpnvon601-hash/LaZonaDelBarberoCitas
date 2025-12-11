@@ -7,34 +7,28 @@
   <style>
     :root{
       --bg:#06070a; --card:#0e1115; --muted:#9aa0a6; --line:#1e252b;
-      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03); /* Fondo semi-transparente */
+      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03);
       --danger:#ef6b6b; --good:#35d19b;
       --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     
-    /* --- MODIFICADO: Solo color de fondo negro base --- */
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background-color: #000000; /* Fondo negro base */
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-    }
-    
-    /* --- NUEVO: Logo como Marca de Agua Centrada Detrás del Contenido --- */
+    /* MODIFICADO: Fondo base negro sólido */
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background-color:#000000;color:var(--text);-webkit-font-smoothing:antialiased}
+
+    /* --- LOGO WATERMARK (OPACIDAD Y TAMAÑO AUMENTADOS) --- */
     body::before {
       content: '';
-      position: fixed; /* Fija el logo en la ventana de visualización */
+      position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background-image: url('20251206_091028.png'); /* URL del logo */
       background-repeat: no-repeat;
-      background-position: center center; /* Centrado vertical y horizontal */
-      background-size: 300px; /* Tamaño del logo (ajustar si es necesario) */
-      opacity: 0.05; /* Transparencia alta para efecto marca de agua */
-      pointer-events: none; /* Asegura que no interfiera con clics */
-      z-index: -1; /* Lo envía detrás del contenido */
+      background-position: center center;
+      background-size: 400px; /* AUMENTADO: Mayor tamaño para mejor visibilidad */
+      opacity: 0.10; /* AUMENTADO: Mayor opacidad para hacerlo más visible */
+      pointer-events: none;
+      z-index: -1;
     }
 
     /* Layout */
@@ -44,8 +38,8 @@
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
     .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
 
-    /* --- Fondo del card semi-transparente (se mantiene) --- */
-    .card{background:var(--glass);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+    /* MODIFICADO: Aumentada la opacidad de la tarjeta (0.02 -> 0.05) para mejor contraste */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.05), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
     h3,h4{margin:0 0 12px 0;font-weight:700}
     .small{font-size:13px;color:var(--muted)}
@@ -128,7 +122,7 @@
       <p class="muted">Cargando — preparando tu experiencia en modo noche</p>
     </div>
   </div>
-  
+
   <div class="wrap">
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="brand"><span class="logo">LB</span> LA ZONA DEL BARBERO — <span class="small" style="margin-left:8px">Agendamiento</span></div>
@@ -181,10 +175,10 @@
         <label>Servicio * (<span class="price">por favor, consultar el valor con el barbero</span>)</label>
         <select id="servicio">
           <option value="">Seleccionar...</option>
-          <option value="Corte" data-duration="30">Corte de cabello — 30 min</option>
-          <option value="Corte + ceja" data-duration="45">Corte + ceja — 45 min</option>
-          <option value="Corte + barba + ceja" data-duration="65">Corte + barba + ceja — 65 min</option>
-          <option value="Corte + barba" data-duration="45">Corte + barba — 45 min</option>
+          <option value="Corte" data-duration="60">Corte de cabello — 1 h</option>
+          <option value="Corte + ceja" data-duration="60">Corte + ceja — 1 h</option>
+          <option value="Corte + barba + ceja" data-duration="60">Corte + barba + ceja — 1 h</option>
+          <option value="Corte + barba" data-duration="60">Corte + barba — 1 h</option>
           <option value="Corte VIP" data-duration="150">Corte + Limpieza Facial (VIP) — 2 h 30 min</option>
         </select>
 
@@ -202,7 +196,7 @@
           <div id="status" style="margin-left:8px"></div>
         </div>
 
-        <div class="meta">Horario operativo: 10:00am — 9:00pm</div>
+        <div class="meta">Horario operativo: 7:00am — 10:00pm</div>
 
         <div id="resumenCita" style="display:none" class="res-box">
           <h4 style="margin:0 0 8px 0">📌 Resumen de la cita</h4>
@@ -254,8 +248,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const OPEN_MIN = 10 * 60;
-    const CLOSE_MIN = 21 * 60;
+    // MODIFICADO: Horario de 7:00 AM a 10:00 PM
+    const OPEN_MIN = 7 * 60; // 7:00 AM
+    const CLOSE_MIN = 22 * 60; // 10:00 PM (22:00)
     
     // ************************************
     // ** DATOS DE BARBEROS Y FOTO DE SANTIAGO **
@@ -377,6 +372,8 @@
 
     function generateCandidateStarts(duration){
       const out = [];
+      // La disponibilidad se genera por el intervalo de tiempo (duration)
+      // para que si es 60 min, vaya de hora en hora
       for(let t = OPEN_MIN; t + duration <= CLOSE_MIN; t += duration){
         out.push(t);
       }
