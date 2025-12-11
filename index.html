@@ -7,13 +7,33 @@
   <style>
     :root{
       --bg:#06070a; --card:#0e1115; --muted:#9aa0a6; --line:#1e252b;
-      --text:#e6eef3; --accent:#f6c358; --accent-2:#7be3a8; --glass:rgba(255,255,255,0.03);
-      --danger:#ef6b6b; --good:#35d19b;
+      --text:#e6eef3; 
+      --accent:#d0d7de; /* MODIFICADO: Antes amarillo/dorado */
+      --accent-2:#aeb5bc; /* MODIFICADO: Antes verde */
+      --glass:rgba(255,255,255,0.03);
+      --danger:#ef6b6b;
+      --good:#e6eef3; /* MODIFICADO: Antes verde */
       --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#030304 0%,#071018 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+    
+    /* MODIFICADO: Fondo base negro sólido */
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background-color:#000000;color:var(--text);-webkit-font-smoothing:antialiased}
+
+    /* --- LOGO WATERMARK (OPACIDAD Y TAMAÑO AUMENTADOS) --- */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url('20251206_091028.png'); /* URL del logo */
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 400px; 
+      opacity: 0.10; 
+      pointer-events: none;
+      z-index: -1;
+    }
 
     /* Layout */
     .wrap{max-width:1100px;margin:36px auto;padding:22px;display:grid;grid-template-columns:1fr 380px;gap:22px}
@@ -22,7 +42,8 @@
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
     .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
 
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+    /* MODIFICADO: Aumentada la opacidad de la tarjeta (0.02 -> 0.05) para mejor contraste */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.05), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
     h3,h4{margin:0 0 12px 0;font-weight:700}
     .small{font-size:13px;color:var(--muted)}
@@ -33,7 +54,8 @@
 
     .row{display:flex;gap:10px}
 
-    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(123,227,168,0.06)}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071018;border:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:800;box-shadow:0 8px 20px rgba(208,215,222,0.06)}
     button{background:transparent;color:var(--text);border:1px solid var(--line);padding:10px 12px;border-radius:10px;cursor:pointer}
 
     .meta{font-size:12px;color:var(--muted);margin-top:8px}
@@ -62,7 +84,8 @@
     .splash .inner{display:grid;place-items:center;gap:14px;padding:22px;text-align:center}
     .splash .ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), transparent);box-shadow:0 8px 40px rgba(0,0,0,0.6);border:6px solid rgba(255,255,255,0.03);position:relative}
     .splash .ring:before{content:'';position:absolute;inset:6px;border-radius:50%;border:6px solid rgba(255,255,255,0.02)}
-    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(123,227,168,0.14);animation:orbit 1.6s linear infinite}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    .splash .dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 6px 20px rgba(208,215,222,0.14);animation:orbit 1.6s linear infinite}
     @keyframes orbit{0%{transform:translateX(-36px) rotate(0) }50%{transform:translateX(36px) rotate(180deg)}100%{transform:translateX(-36px) rotate(360deg)}}
     .splash h2{font-size:18px;letter-spacing:1px;margin:6px 0 0 0}
     .splash p{margin:0;font-size:13px;color:var(--muted)}
@@ -77,8 +100,8 @@
     .tab-panel{min-width:100%;padding:6px}
     .tab-controls{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 
-    /* focus styles */
-    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(123,227,168,0.06);border-color:rgba(123,227,168,0.12)}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    input:focus,select:focus{outline:none;box-shadow:0 4px 18px rgba(208,215,222,0.12);border-color:rgba(208,215,222,0.2)}
 
     /* tiny helpers */
     .muted{color:var(--muted)}
@@ -91,7 +114,8 @@
     
     /* --- NEW: Barbero Photo CSS --- */
     .barbero-photo-container{margin:10px 0 16px 0; display:flex; align-items:center; gap:16px; min-height:80px; transition:opacity .3s ease}
-    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(123,227,168,0.1)}
+    /* MODIFICADO: Sombra con nuevo color RGB (Gris pálido) */
+    .barbero-photo-container img{width:60px; height:60px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow:0 0 16px rgba(208,215,222,0.1)}
     .barbero-photo-container .info{font-size:14px; font-weight:700;}
   </style>
 </head>
@@ -143,9 +167,6 @@
         <label>Teléfono *</label>
         <input id="telefono" type="tel" placeholder="+57 3XX XXX XXXX" autocomplete="tel">
 
-        <label>Correo</label>
-        <input id="email" type="email" placeholder="ejemplo@correo.com" autocomplete="email">
-
         <label>Barbero *</label>
         <select id="barbero">
           <option value="">Seleccionar...</option>
@@ -158,14 +179,14 @@
         <label>Servicio * (<span class="price">por favor, consultar el valor con el barbero</span>)</label>
         <select id="servicio">
           <option value="">Seleccionar...</option>
-          <option value="Corte" data-duration="30">Corte de cabello — 30 min</option>
-          <option value="Corte + ceja" data-duration="45">Corte + ceja — 45 min</option>
-          <option value="Corte + barba + ceja" data-duration="65">Corte + barba + ceja — 65 min</option>
-          <option value="Corte + barba" data-duration="45">Corte + barba — 45 min</option>
+          <option value="Corte" data-duration="60">Corte de cabello — 1 h</option>
+          <option value="Corte + ceja" data-duration="60">Corte + ceja — 1 h</option>
+          <option value="Corte + barba + ceja" data-duration="60">Corte + barba + ceja — 1 h</option>
+          <option value="Corte + barba" data-duration="60">Corte + barba — 1 h</option>
+          <option value="Mascarilla" data-duration="120">Mascarilla — 2 h</option>
+          <option value="Tinte global completo" data-duration="240">Tinte global completo — 4 h</option>
+          <option value="Tinte mechas global" data-duration="240">Tinte mechas global — 4 h</option>
           <option value="Corte VIP" data-duration="150">Corte + Limpieza Facial (VIP) — 2 h 30 min</option>
-          <option value="Mascarilla" data-duration="120">Servicio de mascarilla — 2 h</option>
-          <option value="Tinte global completo" data-duration="240">Servicio de tinte global completo — 4 h</option>
-          <option value="Tinte mechas global" data-duration="240">Servicio de tinte mechas global — 4 h</option>
         </select>
 
         <label>Fecha *</label>
@@ -182,7 +203,7 @@
           <div id="status" style="margin-left:8px"></div>
         </div>
 
-        <div class="meta">Horario operativo: 10:00am — 9:00pm</div>
+        <div class="meta">Horario operativo: 7:00am — 10:00pm</div>
 
         <div id="resumenCita" style="display:none" class="res-box">
           <h4 style="margin:0 0 8px 0">📌 Resumen de la cita</h4>
@@ -234,16 +255,17 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const OPEN_MIN = 10 * 60;
-    const CLOSE_MIN = 21 * 60;
+    // MODIFICADO: Horario de 7:00 AM a 10:00 PM
+    const OPEN_MIN = 7 * 60; // 7:00 AM
+    const CLOSE_MIN = 22 * 60; // 10:00 PM (22:00)
     
     // ************************************
     // ** DATOS DE BARBEROS Y FOTO DE SANTIAGO **
     // ************************************
     const BARBERS = {
-      "Dilan": { phone: "573233489369", image: "https://via.placeholder.com/200?text=Dilan" }, // URL Temporal. ¡Reemplazar!
-      "Alejandro": { phone: "573219621581", image: "https://via.placeholder.com/200?text=Alejandro" }, // URL Temporal. ¡Reemplazar!
-      "Leonardo": { phone: "573215676362", image: "https://via.placeholder.com/200?text=Leonardo" }, // URL Temporal. ¡Reemplazar!
+      "Dilan": { phone: "573233489369", image: "20251206_084342.jpg" }, // URL Temporal. ¡Reemplazar!
+      "Alejandro": { phone: "573219621581", image: "20251205_175256.jpg" }, // URL Temporal. ¡Reemplazar!
+      "Leonardo": { phone: "573215676362", image: "20251205_130628.jpg" }, // URL Temporal. ¡Reemplazar!
       "Santiago": { phone: "573022441609", image: "20251205_130541.jpg" } // ⬅️ Foto de Santiago (ruta local)
     };
     const DEFAULT_CANCEL_PHONE = "573233489369"; 
@@ -357,6 +379,8 @@
 
     function generateCandidateStarts(duration){
       const out = [];
+      // La disponibilidad se genera por el intervalo de tiempo (duration)
+      // para que si es 60 min, vaya de hora en hora
       for(let t = OPEN_MIN; t + duration <= CLOSE_MIN; t += duration){
         out.push(t);
       }
@@ -477,7 +501,8 @@
     function validatePhone(p){ return /^\+?57\s?3\d{2}\s?\d{3}\s?\d{3}$/.test(p) || /^3\d{9}$/.test(p); }
 
     btnLimpiar.addEventListener('click', ()=>{ 
-      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; document.getElementById('email').value=''; 
+      document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; 
+      // document.getElementById('email').value=''; // Eliminado
       horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
       summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='Consultar con barbero';
       document.getElementById('resumenCita').style.display = 'none';
@@ -490,7 +515,7 @@
       const nombre = document.getElementById('nombre').value.trim();
       const apellido = document.getElementById('apellido').value.trim();
       const telefono = document.getElementById('telefono').value.trim();
-      const email = document.getElementById('email').value.trim();
+      // const email = document.getElementById('email').value.trim(); // ELIMINADO: Correo
       const barbero = barberoEl.value;
       const servicio = servicioEl.value;
       const duration = parseDuration();
@@ -505,6 +530,7 @@
       const dateVal = fechaEl.value;
       const startMinutes = Number(horaSelect.value);
 
+      // MODIFICADO: La validación ya no requiere el email
       if(!nombre||!apellido||!telefono||!barbero||!servicio||!dateVal||isNaN(startMinutes)){ alert('Completa todos los campos obligatorios.'); return; }
       if(!validatePhone(telefono) && !confirm('El formato del teléfono parece inusual. ¿Continuar?')) return;
 
@@ -535,7 +561,7 @@
           current[key] = {
             nombre: `${nombre} ${apellido}`,
             telefono,
-            email: email || '',
+            email: '', // MODIFICADO: Guarda cadena vacía en lugar del valor del campo
             barbero,
             servicio,
             durationMinutes: duration,
@@ -551,14 +577,13 @@
         const horaNice = minutesToAmPmWithSpace(startMinutes);
         
         // ************************************
-        // ** MODIFICADO: Mensaje de WhatsApp **
+        // ** MODIFICADO: Mensaje de WhatsApp (quitado el campo correo) **
         // ************************************
         const msg = 
 `💈 *NUEVA RESERVA* 💈
 
 👤 *Cliente:* ${nombre} ${apellido}
 📞 *Teléfono:* ${telefono}
-✉️ *Correo:* ${email || 'No registrado'}
 
 💇‍♂️ *Servicio:* ${servicio}
 ⏱ *Duración:* ${duration} min
