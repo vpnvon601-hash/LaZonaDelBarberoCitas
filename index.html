@@ -13,8 +13,29 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    /* --- MODIFICADO: Fondo negro sólido para el cuerpo --- */
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#000000 0%,#000000 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+    
+    /* --- MODIFICADO: Solo color de fondo negro base --- */
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background-color: #000000; /* Fondo negro base */
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+    }
+    
+    /* --- NUEVO: Logo como Marca de Agua Centrada Detrás del Contenido --- */
+    body::before {
+      content: '';
+      position: fixed; /* Fija el logo en la ventana de visualización */
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url('20251206_091028.png'); /* URL del logo */
+      background-repeat: no-repeat;
+      background-position: center center; /* Centrado vertical y horizontal */
+      background-size: 300px; /* Tamaño del logo (ajustar si es necesario) */
+      opacity: 0.05; /* Transparencia alta para efecto marca de agua */
+      pointer-events: none; /* Asegura que no interfiera con clics */
+      z-index: -1; /* Lo envía detrás del contenido */
+    }
 
     /* Layout */
     .wrap{max-width:1100px;margin:36px auto;padding:22px;display:grid;grid-template-columns:1fr 380px;gap:22px}
@@ -23,7 +44,7 @@
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
     .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
 
-    /* --- MODIFICADO: El fondo del 'card' usa la variable semi-transparente --glass --- */
+    /* --- Fondo del card semi-transparente (se mantiene) --- */
     .card{background:var(--glass);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
 
     h3,h4{margin:0 0 12px 0;font-weight:700}
@@ -106,10 +127,6 @@
       <p style="font-weight:800;letter-spacing:1px">LA ZONA DEL BARBERO</p>
       <p class="muted">Cargando — preparando tu experiencia en modo noche</p>
     </div>
-  </div>
-
-  <div class="logo-header" style="text-align:center; padding: 20px 0;">
-    <img src="20251206_091028.png" alt="Logotipo LA ZONA DEL BARBERO" style="max-width: 150px; height: auto; border-radius: 5px; opacity: 0.95;">
   </div>
   
   <div class="wrap">
