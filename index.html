@@ -40,7 +40,23 @@
     @media(max-width:980px){.wrap{grid-template-columns:1fr;padding:16px} }
 
     .brand{display:flex;align-items:center;gap:12px;justify-content:center;font-weight:800;font-size:20px}
-    .brand .logo{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-grid;place-items:center;font-weight:900;color:#081019}
+    
+    /* INICIO DE CAMBIO: Logo No Circular */
+    .brand .logo{
+        height: 50px; /* Altura fija para el logo */
+        width: 100px; /* Ancho recomendado para un logo horizontal */
+        border-radius: 0; /* ELIMINA LA FORMA CIRCULAR */
+        background: transparent; /* ELIMINA EL FONDO DE COLOR */
+        display: inline-block; /* Permite que se muestre como un logo */
+        font-weight: normal; 
+        color: transparent; /* Oculta el texto "LB" */
+        background-image: url('20251211_104822.png'); /* <--- ¡IMPORTANTE! Reemplaza esto con la ruta de tu logo */
+        background-size: contain; /* Ajusta el logo dentro del tamaño sin cortar */
+        background-repeat: no-repeat;
+        background-position: left center;
+        margin-right: 12px;
+    }
+    /* FIN DE CAMBIO */
 
     /* MODIFICADO: Aumentada la opacidad de la tarjeta (0.02 -> 0.05) para mejor contraste */
     .card{background:linear-gradient(180deg, rgba(255,255,255,0.05), transparent);padding:18px;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 30px rgba(0,0,0,0.6)}
@@ -502,7 +518,6 @@
 
     btnLimpiar.addEventListener('click', ()=>{ 
       document.getElementById('nombre').value=''; document.getElementById('apellido').value=''; document.getElementById('telefono').value=''; 
-      // document.getElementById('email').value=''; // Eliminado
       horaSelect.innerHTML='<option value="">Selecciona hora...</option>'; availableList.innerHTML='Selecciona servicio (sugerencias). Luego elige barbero y fecha para ver disponibilidad real.'; slotsBox.innerHTML=''; 
       summaryService.textContent='-'; summaryDuration.textContent='-'; summaryPrice.textContent='Consultar con barbero';
       document.getElementById('resumenCita').style.display = 'none';
@@ -515,11 +530,11 @@
       const nombre = document.getElementById('nombre').value.trim();
       const apellido = document.getElementById('apellido').value.trim();
       const telefono = document.getElementById('telefono').value.trim();
-      // const email = document.getElementById('email').value.trim(); // ELIMINADO: Correo
+      // const email fue eliminado
       const barbero = barberoEl.value;
       const servicio = servicioEl.value;
       const duration = parseDuration();
-      // const price = parsePrice(); // Eliminado
+      // const price fue eliminado
 
       // ************************************
       // ** NUEVO: Obtener el teléfono del barbero **
