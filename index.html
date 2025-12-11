@@ -306,7 +306,6 @@
     const whatsappCancelBtn = document.getElementById('whatsappBtn');
     
     function parseDuration(){ return Number(servicioEl.selectedOptions[0]?.dataset.duration) || 0; }
-    // Eliminada función parsePrice()
 
     function minutesToShortAmPm(m){
       const hh = Math.floor(m/60);
@@ -361,6 +360,29 @@
       }
     }
 
+    // ************************************
+    // ** NUEVO: Obtener ausencias desde Firebase **
+    // ************************************
+    async function fetchAbsencesRT(barbero, dateISO){
+      const path = `absences/${barbero}/${dateISO}`;
+      const snap = await get(child(ref(db), path));
+      if(snap.exists()){
+        const val = snap.val();
+        // Asegurarse de que start/end de intervalos sean números
+        const intervals = (val.intervals || []).map(i => ({
+            start: Number(i.start),
+            end: Number(i.end),
+            reason: i.reason || 'Ausencia temporal'
+        }));
+        return {
+          isFullDay: val.isFullDay || false,
+          reason: val.reason || 'No disponible',
+          intervals: intervals
+        };
+      }
+      return null;
+    }
+
 
     async function fetchAppointmentsRT(barbero, dateISO){
       const path = `appointments/${barbero}/${dateISO}`;
@@ -405,22 +427,19 @@
 
     function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
+    // ************************************
+    // ** MODIFICADO: refreshAvailability con manejo de Ausencias **
+    // ************************************
     async function refreshAvailability(){
       const service = servicioEl.value;
       const duration = parseDuration();
       summaryService.textContent = service || '-';
       summaryDuration.textContent = duration ? duration : '-';
-      // ************************************
-      // ** MODIFICADO: Precio siempre es "Consultar con barbero" **
-      // ************************************
       summaryPrice.textContent = 'Consultar con barbero'; 
 
       const barbero = barberoEl.value;
       const dateVal = fechaEl.value;
       
-      // ************************************
-      // ** NUEVO: Actualizar foto del barbero **
-      // ************************************
       updateBarberoPhoto(barbero);
 
       availableList.innerHTML = '';
@@ -454,26 +473,75 @@
 
       availableList.innerHTML = '<div class="small">Cargando disponibilidad... <span class="loader"></span></div>';
       try{
-        const appts = await fetchAppointmentsRT(barbero, dateVal);
-        const occupied = buildOccupied(appts);
+        const [appts, absenceData] = await Promise.all([
+          fetchAppointmentsRT(barbero, dateVal),
+          fetchAbsencesRT(barbero, dateVal) // <-- Obtener datos de ausencia
+        ]);
+
+        // --- MANEJO DE AUSENCIA COMPLETA ---
+        if(absenceData && absenceData.isFullDay){
+          availableList.innerHTML = `❌ ${barbero} no está disponible el ${dateVal}.`;
+          slotsBox.innerHTML = `<div class="small" style="color:var(--danger)">**Ausente:** ${absenceData.reason || 'No disponible por día completo'}</div>`;
+          horaSelect.innerHTML = '<option value="">Barbero ausente</option>';
+          return;
+        }
+
+        let occupied = buildOccupied(appts);
+        
+        // --- AÑADIR INTERVALOS DE AUSENCIA POR HORA A OCUPADOS ---
+        if(absenceData && absenceData.intervals.length > 0){
+          const absenceIntervals = absenceData.intervals.map(i => ({
+            start: i.start, 
+            end: i.end, 
+            reason: i.reason || 'Ausencia temporal'
+          }));
+          occupied = buildOccupied([...occupied, ...absenceIntervals]);
+          availableList.innerHTML += `<div class="small" style="color:var(--danger)">(${barbero} tiene bloques de **ausencia temporal** hoy)</div>`;
+        }
 
         availableList.innerHTML = `Disponibilidad para ${barbero} el ${dateVal}:`;
 
         let anyAvailable = false;
+        
         for(const s of candidates){
           const e = s + duration;
           if(e > CLOSE_MIN) continue;
 
           const div = document.createElement('div');
           div.className = 'slot';
+          
+          let conflictReason = null;
+          
+          // 1. Verificar conflicto con citas (appointments) o con el intervalo de ausencia general (ocupados)
+          if(isConflict(s, e, occupied)){
+              // Si hay conflicto, determinamos si es por una cita existente o por una ausencia específica
+              const isDueToAppointment = isConflict(s,e, buildOccupied(appts)); // Solo citas
+              
+              if(isDueToAppointment) {
+                  conflictReason = 'Hora ya agendada';
+              } else if (absenceData && absenceData.intervals.length > 0) {
+                   // Si no es por cita, debe ser por una ausencia temporal
+                  const conflictInterval = absenceData.intervals.find(iv => s < iv.end && e > iv.start);
+                  if(conflictInterval) {
+                      conflictReason = conflictInterval.reason || 'Bloqueo temporal (Ausencia)';
+                  } else {
+                     // Caso de respaldo (aunque 'occupied' ya incluye las ausencias)
+                     conflictReason = 'No disponible';
+                  }
+              } else {
+                  // Fallback para cualquier otro bloqueo
+                  conflictReason = 'No disponible';
+              }
+          }
 
-          if(isConflict(s,e,occupied)){
+          if(conflictReason){
             div.classList.add('busy');
-            div.textContent = `${minutesToShortAmPm(s)} — Hora ya agendada`;
+            div.textContent = `${minutesToShortAmPm(s)} — ${conflictReason}`;
             slotsBox.appendChild(div);
             continue;
           }
 
+          // Si llega aquí, está disponible
           anyAvailable = true;
           div.textContent = `${minutesToShortAmPm(s)}`;
           div.onclick = () => {
@@ -489,6 +557,7 @@
           slotsBox.innerHTML = '<div class="small">No hay horas libres para este servicio en esta fecha.</div>';
           horaSelect.innerHTML = '<option value="">No disponible</option>';
         } else {
+          // Mostrar citas existentes
           if(appts.length){
             const hr = document.createElement('div'); hr.style.marginTop='8px'; hr.style.borderTop='1px dashed var(--line)'; hr.style.paddingTop='8px';
             const title = document.createElement('div'); title.className='small'; title.textContent='Reservas existentes:';
@@ -537,7 +606,7 @@
       // const price fue eliminado
 
       // ************************************
-      // ** NUEVO: Obtener el teléfono del barbero **
+      // ** OBTENER TELÉFONO DEL BARBERO **
       // ************************************
       const barberoData = BARBERS[barbero];
       const barberoPhone = barberoData ? barberoData.phone : DEFAULT_CANCEL_PHONE;
@@ -558,11 +627,23 @@
       submitting=true; btnGuardar.disabled=true; status.innerHTML='<span class="loader"></span>';
 
       try{
-        const appts = await fetchAppointmentsRT(barbero, dateVal);
-        const occupied = buildOccupied(appts);
+        // ** DOBLE CHEQUEO DE DISPONIBILIDAD (CITAS Y AUSENCIAS) **
+        const [appts, absenceData] = await Promise.all([
+          fetchAppointmentsRT(barbero, dateVal),
+          fetchAbsencesRT(barbero, dateVal) // <-- Chequeo de ausencia
+        ]);
 
-        if(isConflict(startMinutes, endMinutes, occupied)){ alert('La hora ya no está disponible. Actualiza disponibilidad y elige otra.'); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
+        if(absenceData && absenceData.isFullDay){ alert(`El barbero está ausente todo el día por: ${absenceData.reason || 'Motivo no especificado'}. Elige otra fecha.`); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
 
+        let occupied = buildOccupied(appts);
+        if(absenceData && absenceData.intervals.length > 0){
+          const absenceIntervals = absenceData.intervals.map(i => ({ start: i.start, end: i.end }));
+          occupied = buildOccupied([...occupied, ...absenceIntervals]);
+        }
+        
+        if(isConflict(startMinutes, endMinutes, occupied)){ alert('La hora no está disponible (conflicto con otra cita o ausencia). Actualiza disponibilidad y elige otra.'); submitting=false; btnGuardar.disabled=false; status.innerHTML=''; return; }
+
+        // ** INICIA LA TRANSACCIÓN (guardado) **
         const parentPath = `appointments/${barbero}/${dateVal}`;
         const parentRef = ref(db, parentPath);
 
@@ -588,11 +669,12 @@
           };
           return current;
         });
+        // ** FIN DE LA TRANSACCIÓN **
 
         const horaNice = minutesToAmPmWithSpace(startMinutes);
         
         // ************************************
-        // ** MODIFICADO: Mensaje de WhatsApp (quitado el campo correo) **
+        // ** MENSAJE DE WHATSAPP **
         // ************************************
         const msg = 
 `💈 *NUEVA RESERVA* 💈
@@ -623,7 +705,7 @@ Estamos listos para darte el mejor flow. 🙌`;
         document.getElementById('resumenCita').style.display = 'block';
         
         // ************************************
-        // ** NUEVO: Enlace de cancelación al número del barbero **
+        // ** ENLACE DE CANCELACIÓN **
         // ************************************
         whatsappCancelBtn.href = `https://wa.me/${barberoPhone}`; 
 
