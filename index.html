@@ -428,7 +428,7 @@
     function isConflict(s,e,occupied){ return occupied.some(iv => s < iv.end && e > iv.start); }
 
     // ************************************
-    // ** MODIFICADO: refreshAvailability con manejo de Ausencias **
+    // ** MODIFICADO: refreshAvailability con manejo de Ausencias y HORAS PASADAS **
     // ************************************
     async function refreshAvailability(){
       const service = servicioEl.value;
@@ -454,11 +454,51 @@
 
       const candidates = generateCandidateStarts(duration);
 
+      // --- NUEVO: Obtener la hora actual en minutos ---
+      const today = new Date();
+      // Verificamos si la fecha tiene un valor y la parseamos.
+      let currentTimeMinutes = -1; // -1 indica que no aplica (no es hoy o falta la fecha)
+      if (dateVal) {
+          const [year, month, day] = dateVal.split('-').map(Number);
+          const selectedDate = new Date(year, month - 1, day);
+          
+          // La hora actual en minutos solo es relevante si la fecha seleccionada es HOY
+          if (selectedDate.toDateString() === today.toDateString()) {
+             // Sumamos 5 minutos de "gracia" para que la hora actual no bloquee una cita que está *justo* por empezar
+             currentTimeMinutes = today.getHours() * 60 + today.getMinutes() + 5; 
+          }
+      }
+      // ------------------------------------------------
+
       if(!barbero || !dateVal){
         availableList.innerHTML = 'Sugerencias (elige barbero y fecha para disponibilidad real):';
         candidates.forEach(s => {
+          
+          const end = s + duration;
+          let isPast = false;
+          let pastReason = '';
+
+          // --- NUEVO: Verificar si la hora ya pasó (solo para hoy) ---
+          if (currentTimeMinutes !== -1) {
+              // Verificamos si la hora de finalización del servicio ya pasó
+              if (end < currentTimeMinutes) {
+                  isPast = true;
+                  pastReason = 'Hora ya pasada';
+              }
+          }
+          // ------------------------------------------------
+
           const div = document.createElement('div');
           div.className = 'slot';
+
+          if (isPast) {
+              div.classList.add('busy');
+              div.textContent = `${minutesToShortAmPm(s)} — ${pastReason}`;
+              slotsBox.appendChild(div);
+              return; // No añadir a la lista desplegable si ya pasó
+          }
+          
+          // Si no está en el pasado, se muestra como sugerencia
           div.textContent = `${minutesToShortAmPm(s)} — ${duration} min`;
           div.onclick = () => {
             horaSelect.value = s;
@@ -475,7 +515,7 @@
       try{
         const [appts, absenceData] = await Promise.all([
           fetchAppointmentsRT(barbero, dateVal),
-          fetchAbsencesRT(barbero, dateVal) // <-- Obtener datos de ausencia
+          fetchAbsencesRT(barbero, dateVal) 
         ]);
 
         // --- MANEJO DE AUSENCIA COMPLETA ---
@@ -512,8 +552,14 @@
           
           let conflictReason = null;
           
-          // 1. Verificar conflicto con citas (appointments) o con el intervalo de ausencia general (ocupados)
-          if(isConflict(s, e, occupied)){
+          // --- NUEVO: 0. Verificar si la hora ya pasó (solo para hoy) ---
+          if (currentTimeMinutes !== -1 && e < currentTimeMinutes) {
+              conflictReason = 'Hora ya pasada';
+          }
+          // -----------------------------------------------------------
+          
+          // 1. Verificar conflicto con citas o ausencia general (solo si no está ya en el pasado)
+          if(!conflictReason && isConflict(s, e, occupied)){
               // Si hay conflicto, determinamos si es por una cita existente o por una ausencia específica
               const isDueToAppointment = isConflict(s,e, buildOccupied(appts)); // Solo citas
               
@@ -623,6 +669,18 @@
 
       const endMinutes = startMinutes + duration;
       if(endMinutes > CLOSE_MIN){ alert('La cita terminaría fuera del horario operativo.'); return; }
+
+      // --- NUEVO: Validar hora pasada al intentar guardar (Doble chequeo) ---
+      let currentTimeMinutes = -1;
+      if (apptDate.toDateString() === today.toDateString()) {
+          currentTimeMinutes = today.getHours() * 60 + today.getMinutes() + 5; // +5 min de gracia
+      }
+      if (currentTimeMinutes !== -1 && endMinutes < currentTimeMinutes) {
+          alert('No puedes reservar esta hora. El servicio ya habría terminado.');
+          return;
+      }
+      // -------------------------------------------------------------------
+
 
       submitting=true; btnGuardar.disabled=true; status.innerHTML='<span class="loader"></span>';
 
