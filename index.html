@@ -276,13 +276,13 @@
     const CLOSE_MIN = 22 * 60; // 10:00 PM (22:00)
     
     // ************************************
-    // ** DATOS DE BARBEROS Y FOTO DE SANTIAGO **
+    // ** DATOS DE BARBEROS Y FOTO DE SANTIAGO - MODIFICADO: Santiago primero **
     // ************************************
     const BARBERS = {
-      "Dilan": { phone: "573233489369", image: "20251206_084342.jpg" }, // URL Temporal. ¡Reemplazar!
-      "Alejandro": { phone: "573219621581", image: "20251205_175256.jpg" }, // URL Temporal. ¡Reemplazar!
-      "Leonardo": { phone: "573215676362", image: "20251205_130628.jpg" }, // URL Temporal. ¡Reemplazar!
-      "Santiago": { phone: "573022441609", image: "20251205_130541.jpg" } // ⬅️ Foto de Santiago (ruta local)
+      "Santiago": { phone: "573022441609", image: "20251205_130541.jpg" }, // Movido a la primera posición
+      "Dilan": { phone: "573233489369", image: "20251206_084342.jpg" }, 
+      "Alejandro": { phone: "573219621581", image: "20251205_175256.jpg" }, 
+      "Leonardo": { phone: "573215676362", image: "20251205_130628.jpg" } 
     };
     const DEFAULT_CANCEL_PHONE = "573233489369"; 
 
@@ -329,6 +329,7 @@
     // ************************************
     function setupBarberoSelect(){
       barberoEl.innerHTML = '<option value="">Seleccionar...</option>';
+      // La iteración sigue el orden definido en el objeto BARBERS (Santiago primero)
       for(const name in BARBERS){
         const opt = document.createElement('option');
         opt.value = name;
